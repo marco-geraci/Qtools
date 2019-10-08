@@ -183,7 +183,7 @@ midrqControl <- function(method = "Nelder-Mead", ecdf_est = "npc"){
 
 }
 
-midrq <- function(formula, data, tau = 0.5, lambda = NULL, subset, weights, na.action, contrasts = NULL, offset, type = 1, midFit = NULL, bws = NULL, control = list()){
+midrq <- function(formula, data, tau = 0.5, lambda = NULL, subset, weights, na.action, contrasts = NULL, offset, type = 1, midFit = NULL, control = list()){
 
 cl <- match.call()
 mf <- match.call(expand.dots = FALSE)
@@ -249,8 +249,8 @@ if(p == 1 & intercept){
 
 	# Estimate mid-CDF if not provided
 	if(is.null(midFit)){
-		midFit <- cmidecdf.fit(x = x, y = y, ecdf_est = control$ecdf_est, theta = seq(0, 2, by = 0.05), bws = bws, intercept = intercept)
-	}
+		midFit <- cmidecdf.fit(x = x, y = y, ecdf_est = control$ecdf_est, theta = seq(0, 2, by = 0.05), bws = control$bws, intercept = intercept)
+	} else {control$ecdf_est <- midFit$ecdf_est}
 	if(type == 3){
 		# allowed range for tau
 		r <- attr(midFit$G, "range")
@@ -378,24 +378,6 @@ if(type %in% c(1,2)){
 return(fit)
 }
 
-print.midrq <- function(x, ...){
-
-if (!is.null(cl <- x$call)) {
-	cat("call:\n")
-	dput(cl)
-	cat("\n")
-}
-
-coef <- x$coefficients
-cat("\nCoefficients linear predictor:\n")
-print(coef, ...)
-nobs <- length(x$y)
-p <- ncol(x$x)
-rdf <- nobs - p
-cat("\nDegrees of freedom:", nobs, "total;", rdf, "residual\n")
-
-}
-
 fitted.midrq <- function(object, ...){
 
 return(object$fitted.values)
@@ -444,7 +426,7 @@ return(object$coefficients)
 
 }
 
-vcov.midrq <- function(object, ...){
+vcov.midrq <- function(object, robust = FALSE, ...){
 
 	phi <- function(xnz, Fvec, nonZero, Z, w, n, k, tau, yo, offset, binary, lambda = NULL){
 
@@ -474,6 +456,13 @@ vcov.midrq <- function(object, ...){
 	return(ans)
 
 	}
+	
+	huber <- function(x, a = 1.645){
+
+	ifelse(abs(x) <= a, 0.5*x^2, a*(abs(x) - 0.5*a))
+
+	}
+
 
 tau <- object$tau
 nq <- length(tau)
@@ -492,7 +481,7 @@ xb <- as.matrix(predict(object, type = "link")) # xb includes the offset
 yo <- object$midFit$yo
 K <- length(yo)
 xx <- solve(crossprod(x))
-rate <- if(object$control$ecdf_est == "npc") prod(object$midFit$bw$xbw)*n else 1
+rate <- if(object$midFit$ecdf_est == "npc") prod(object$midFit$bw$xbw)*n else 1
 Fvec <- as.vector(object$midFit$Fhat)
 G <- object$midFit$G
 Gvec <- as.vector(G)
@@ -501,11 +490,12 @@ Gvec <- as.vector(G)
 J1 <- object$midFit$Fse^2
 	
 for(j in 1:nq){
-	V1 <- xx %*% t(x) %*% Diagonal(x = (object$hy - xb[,j])^2) %*% x %*% xx
+	res <- if(robust) huber(object$hy - xb[,j]) else (object$hy - xb[,j])^2
+	V1 <- xx %*% t(x) %*% Diagonal(x = res) %*% x %*% xx
 
 	up <- apply(tau[j] - G, 1, function(x) which(x < 0)[1])
 	low <- up - 1
-	nonZero <- c(which(!is.na(match(Gvec, diag(G[,low])))), which(!is.na(match(Gvec, diag(G[,up])))))
+	nonZero <- c((low - 1)*n + 1:n, (up - 1)*n + 1:n)
 	
 	J2 <- jacobian(func = phi, x = Fvec[nonZero], Fvec = Fvec, nonZero = nonZero, Z = cbind(yo[low], yo[up]), method = "simple", w = x, n = n, k = K, tau = tau[j], yo = yo, offset = object$offset, binary = object$binary, lambda = object$lambda, method.args = list(eps = 1e-6))
 	V2 <- J2 %*% Diagonal(x = J1[nonZero]) %*% t(J2)
@@ -517,7 +507,7 @@ names(V) <- tau
 return(V)
 }
 
-summary.midrq <- function(object, alpha = 0.05, ...){
+summary.midrq <- function(object, alpha = 0.05, robust = FALSE, ...){
 
 tau <- object$tau
 nq <- length(tau)
@@ -530,7 +520,7 @@ if(object$intercept & p == 1){
 	lower <- matrix(tmp$lower, nrow = 1)
 	upper <- matrix(tmp$upper, nrow = 1)
 } else {
-	SE <- sapply(vcov(object), function(x) sqrt(diag(x)))
+	SE <- sapply(vcov(object, robust = robust), function(x) sqrt(diag(x)))
 	lower <- bhat - SE*qnorm(1 - alpha/2, 0, 1)
 	upper <- bhat + SE*qnorm(1 - alpha/2, 0, 1)
 }
@@ -553,24 +543,6 @@ class(object) <- "summary.midrq"
 return(object)
 
 }
-
-print.summary.midrq <- function(x, ...){
-
-if (!is.null(cl <- x$call)) {
-	cat("call:\n")
-	dput(cl)
-	cat("\n")
-}
-
-cat("\nCoefficients linear predictor:\n")
-print(x$tTable, ...)
-nobs <- length(x$y)
-p <- ncol(x$x)
-rdf <- nobs - p
-cat("\nDegrees of freedom:", nobs, "total;", rdf, "residual\n")
-
-}
-
 
 # Plot and print functions
 
@@ -654,6 +626,41 @@ if (!is.null(cl <- x$call)) {
         dput(cl)
         cat("\n")
 }
+
+}
+
+print.midrq <- function(x, ...){
+
+if (!is.null(cl <- x$call)) {
+	cat("call:\n")
+	dput(cl)
+	cat("\n")
+}
+
+coef <- x$coefficients
+cat("\nCoefficients linear predictor:\n")
+print(coef, ...)
+nobs <- length(x$y)
+p <- ncol(x$x)
+rdf <- nobs - p
+cat("\nDegrees of freedom:", nobs, "total;", rdf, "residual\n")
+
+}
+
+print.summary.midrq <- function(x, ...){
+
+if (!is.null(cl <- x$call)) {
+	cat("call:\n")
+	dput(cl)
+	cat("\n")
+}
+
+cat("\nCoefficients linear predictor:\n")
+print(x$tTable, ...)
+nobs <- length(x$y)
+p <- ncol(x$x)
+rdf <- nobs - p
+cat("\nDegrees of freedom:", nobs, "total;", rdf, "residual\n")
 
 }
 
