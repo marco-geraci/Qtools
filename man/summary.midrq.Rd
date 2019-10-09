@@ -9,7 +9,7 @@ This functions gives a summary list for a mid-quantile regression model.
 }
 
 \usage{
-\method{summary}{midrq}(object, alpha = 0.05, ...)
+\method{summary}{midrq}(object, alpha = 0.05, numerical = FALSE, robust = FALSE, ...)
 }
 
 \arguments{
@@ -18,6 +18,12 @@ an object of \code{\link{class}} \code{midrq}.
 }
   \item{alpha}{
 numeric value to determine the confidence level \code{(1-alpha)} of the required interval.
+}
+  \item{numerical}{
+logical flag. If \code{TRUE}, the variance-covariance estimate is approximated by the inverse of the numerical Hessian.
+}
+  \item{robust}{
+logical flag. If \code{TRUE}, the Huber-White covariance estimate is computed using the Huberized residuals.
 }
 
   \item{...}{

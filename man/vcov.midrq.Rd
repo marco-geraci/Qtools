@@ -9,12 +9,18 @@ This functions returns the variance-covariance matrix of the main parameters of 
 }
 
 \usage{
-\method{vcov}{midrq}(object, ...)
+\method{vcov}{midrq}(object, numerical = FALSE, robust = FALSE, ...)
 }
 
 \arguments{
   \item{object}{
 an object of \code{\link{class}} \code{midrq}.
+}
+  \item{numerical}{
+logical flag. If \code{TRUE}, the variance-covariance estimate is approximated by the inverse of the numerical Hessian.
+}
+  \item{robust}{
+logical flag. If \code{TRUE}, the Huber-White covariance estimate is computed using the Huberized residuals.
 }
 
   \item{...}{

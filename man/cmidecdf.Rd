@@ -12,7 +12,7 @@ Compute conditional mid-cumulative probabilities
 
 \usage{
 cmidecdf(formula, data, ecdf_est = "npc", bws = NULL, theta = NULL,
-	subset, weights, na.action)
+	subset, weights, na.action, contrasts = NULL)
 cmidecdf.fit(x, y, intercept, ecdf_est, bws = NULL, theta = NULL)
 }
 
@@ -40,6 +40,9 @@ an optional vector of weights to be used in the fitting process. Not currently i
 }
   \item{na.action}{
 a function which indicates what should happen when the data contain \code{NA}s.
+}
+  \item{contrasts}{
+an optional list. See the contrasts.arg of \code{\link{model.matrix.default}}.
 }
   \item{x}{
 design matrix of dimension \eqn{n * p}.
