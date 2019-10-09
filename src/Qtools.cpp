@@ -54,7 +54,8 @@ double C_midrqLoss(NumericVector b, NumericMatrix G, NumericMatrix x, NumericVec
 	/* objective function */
 	
 	for(int i = 0; i < n; ++i){
-		if(type == 1) {Rn[i] = Iy[i];}
+		//if(type == 1) {Rn[i] = Iy[i];}
+		if(type != 2) {Rn[i] = Iy[i];}
 		else {
 			IntegerVector Ix(n);
 			for(int j = 0; j < n; ++j){
@@ -129,7 +130,8 @@ double C_midrqLoss_bc(NumericVector b, NumericMatrix G, NumericMatrix x, Numeric
 	/* objective function */
 	
 	for(int i = 0; i < n; ++i){
-		if(type == 1) {Rn[i] = Iy[i];}
+		//if(type == 1) {Rn[i] = Iy[i];}
+		if(type != 2) {Rn[i] = Iy[i];}
 		else {
 			IntegerVector Ix(n);
 			for(int j = 0; j < n; ++j){
@@ -214,7 +216,8 @@ double C_midrqLoss_ao(NumericVector b, NumericMatrix G, NumericMatrix x, Numeric
 	/* objective function */
 	
 	for(int i = 0; i < n; ++i){
-		if(type == 1) {Rn[i] = Iy[i];}
+		//if(type == 1) {Rn[i] = Iy[i];}
+		if(type != 2) {Rn[i] = Iy[i];}
 		else {
 			IntegerVector Ix(n);
 			for(int j = 0; j < n; ++j){
