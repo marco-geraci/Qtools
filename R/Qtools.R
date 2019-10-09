@@ -84,7 +84,7 @@ return(val)
 
 # Conditional mid-CDF and mid-QF
 
-cmidecdf <- function(formula, data, ecdf_est = "npc", bws = NULL, theta = NULL, subset, weights, na.action){
+cmidecdf <- function(formula, data, ecdf_est = "npc", bws = NULL, theta = NULL, subset, weights, na.action, contrasts = NULL){
 
 cl <- match.call()
 mf <- match.call(expand.dots = FALSE)
@@ -426,50 +426,52 @@ return(object$coefficients)
 
 }
 
-vcov.midrq <- function(object, robust = FALSE, ...){
+vcov.midrq <- function(object, numerical = FALSE, robust = FALSE, ...){
 
 	phi <- function(xnz, Fvec, nonZero, Z, w, n, k, tau, yo, offset, binary, lambda = NULL){
+		Fvec[nonZero] <- xnz 
+		Fhat <- matrix(Fvec, n, k)
+		M <- apply(Fhat, 1, diff)
+		if(ncol(Fhat) > 2) M <- t(M)
+		G <- Fhat[,-1] - 0.5*M
+		G <- cbind(Fhat[,1]/2, G)
+			
+		PI <- t(apply(G, 1, function(x, p){
+			sel <- which(p - x < 0)[1]
+			x[c(sel-1, sel)]
+			}, p = tau))
+		B <- (tau - PI[,1])/(PI[,2] - PI[,1])*(Z[,2] - Z[,1]) + Z[,1]
 
-	Fvec[nonZero] <- xnz 
-	Fhat <- matrix(Fvec, n, k)
-	M <- apply(Fhat, 1, diff)
-	if(ncol(Fhat) > 2) M <- t(M)
-	G <- Fhat[,-1] - 0.5*M
-	G <- cbind(Fhat[,1]/2, G)
-		
-	PI <- t(apply(G, 1, function(x, p){
-		sel <- which(p - x < 0)[1]
-		x[c(sel-1, sel)]
-		}, p = tau))
-	B <- (tau - PI[,1])/(PI[,2] - PI[,1])*(Z[,2] - Z[,1]) + Z[,1]
+		if(!is.null(lambda)){
+		if(binary){
+			B <- ao(B, lambda) - offset
+		} else {
+			B <- bc(B, lambda) - offset
+		}
+		} else {B <- B - offset}
 
-	if(!is.null(lambda)){
-	if(binary){
-		B <- ao(B, lambda) - offset
-	} else {
-		B <- bc(B, lambda) - offset
-	}
-	} else {B <- B - offset}
-
-	ans <- qr.solve(w, B)
-
-	return(ans)
-
+		ans <- qr.solve(w, B)
+		return(ans)
 	}
 	
 	huber <- function(x, a = 1.645){
-
-	ifelse(abs(x) <= a, 0.5*x^2, a*(abs(x) - 0.5*a))
-
+		ifelse(abs(x) <= a, 0.5*x^2, a*(abs(x) - 0.5*a))
 	}
-
+	
+	f <- function(b, args) {
+		args$b <- b
+		do.call(C_midrqLoss, args = args)
+	}
 
 tau <- object$tau
 nq <- length(tau)
 x <- object$x
 n <- length(object$y)
 p <- ncol(x)
-V <- list()
+G <- object$midFit$G
+Gvec <- as.vector(G)
+yo <- object$midFit$yo
+K <- length(yo)
 
 if(object$intercept & p == 1){
 	V <- as.list(attr(confint(object$midFit), "stderr")^2)
@@ -477,37 +479,48 @@ if(object$intercept & p == 1){
 	return(V)
 }
 
-xb <- as.matrix(predict(object, type = "link")) # xb includes the offset
-yo <- object$midFit$yo
-K <- length(yo)
-xx <- solve(crossprod(x))
-rate <- if(object$midFit$ecdf_est == "npc") prod(object$midFit$bw$xbw)*n else 1
-Fvec <- as.vector(object$midFit$Fhat)
-G <- object$midFit$G
-Gvec <- as.vector(G)
+if(numerical){
+	FIT_ARGS <- list(G = G, x = x, yo = yo, offset = object$offset, type = object$type, n = n, p = p, k = K)
 
-# variance of Fhat
-J1 <- object$midFit$Fse^2
-	
-for(j in 1:nq){
-	res <- if(robust) huber(object$hy - xb[,j]) else (object$hy - xb[,j])^2
-	V1 <- xx %*% t(x) %*% Diagonal(x = res) %*% x %*% xx
+	V <- list()
+	for(j in 1:nq){
+		FIT_ARGS$tau <- tau[j]
+		H <- hessian(func = f, x = object$coefficients[,j], method = "Richardson", args = FIT_ARGS)
+		ans <- MASS::ginv(H)
+		V[[j]] <- ans/n
+	}
+} else {
+	xb <- as.matrix(predict(object, type = "link")) # xb includes the offset
+	xx <- solve(crossprod(x))
+	rate <- if(object$midFit$ecdf_est == "npc") prod(object$midFit$bw$xbw)*n else 1
+	Fvec <- as.vector(object$midFit$Fhat)
+	r <- attr(G, "range")
 
-	up <- apply(tau[j] - G, 1, function(x) which(x < 0)[1])
-	low <- up - 1
-	nonZero <- c((low - 1)*n + 1:n, (up - 1)*n + 1:n)
-	
-	J2 <- jacobian(func = phi, x = Fvec[nonZero], Fvec = Fvec, nonZero = nonZero, Z = cbind(yo[low], yo[up]), method = "simple", w = x, n = n, k = K, tau = tau[j], yo = yo, offset = object$offset, binary = object$binary, lambda = object$lambda, method.args = list(eps = 1e-6))
-	V2 <- J2 %*% Diagonal(x = J1[nonZero]) %*% t(J2)
+	# variance of Fhat
+	J1 <- object$midFit$Fse^2
 
-	V[[j]] <- as.matrix(V1 + rate*V2)
+	V <- list()
+	for(j in 1:nq){
+		res <- if(robust) huber(object$hy - xb[,j]) else (object$hy - xb[,j])^2
+		V1 <- xx %*% t(x) %*% Diagonal(x = res) %*% x %*% xx
+
+		up <- apply(tau[j] - G, 1, function(x) which(x < 0)[1])
+		low <- up - 1
+		if(any(low == 0)) stop("Something went wrong. Perhaps tau is outside allowed range ", "[", round(r[1], 3), ", " , round(r[2], 3), "]")
+		nonZero <- c((low - 1)*n + 1:n, (up - 1)*n + 1:n)
+		
+		J2 <- jacobian(func = phi, x = Fvec[nonZero], Fvec = Fvec, nonZero = nonZero, Z = cbind(yo[low], yo[up]), method = "simple", w = x, n = n, k = K, tau = tau[j], yo = yo, offset = object$offset, binary = object$binary, lambda = object$lambda, method.args = list(eps = 1e-6))
+		V2 <- J2 %*% Diagonal(x = J1[nonZero]) %*% t(J2)
+
+		V[[j]] <- as.matrix(V1 + rate*V2)
+	}
 }
 
 names(V) <- tau
 return(V)
 }
 
-summary.midrq <- function(object, alpha = 0.05, robust = FALSE, ...){
+summary.midrq <- function(object, alpha = 0.05, numerical = FALSE, robust = FALSE, ...){
 
 tau <- object$tau
 nq <- length(tau)
@@ -520,7 +533,7 @@ if(object$intercept & p == 1){
 	lower <- matrix(tmp$lower, nrow = 1)
 	upper <- matrix(tmp$upper, nrow = 1)
 } else {
-	SE <- sapply(vcov(object, robust = robust), function(x) sqrt(diag(x)))
+	SE <- sapply(vcov(object, numerical = numerical, robust = robust), function(x) sqrt(diag(x)))
 	lower <- bhat - SE*qnorm(1 - alpha/2, 0, 1)
 	upper <- bhat + SE*qnorm(1 - alpha/2, 0, 1)
 }
