@@ -1462,7 +1462,7 @@ Rfun <- function(x, t, e) mean(apply(x, 1, function(xj,t) all(xj <= t), t = t) *
 
 fit <- try(rq.wfit(x, z, tau = tau, weights = weights, method = method.rq), silent = T)
 
-if(class(fit)!="try-error"){
+if(!inherits(fit, "try-error")){
 	e <- as.numeric(fit$residuals <= 0)
 	#out <- apply(x, 1, function(t, z, e) Rfun(z, t, e), z = x, e = tau - e)
 	for(i in 1:n){
@@ -1592,7 +1592,7 @@ if(!conditional){
 	# estimate linear QR for different taus
 		for(j in 1:nq){
 			fit <- try(do.call(rq.wfit, args = list(x = x, y = newresponse, tau = tau[j], weights = w, method = method)), silent = TRUE)
-			if(class(fit)!="try-error"){
+			if(!inherits(fit, "try-error")){
 			zhat[,j,i] <- drop(x %*% fit$coefficients)
 			
 			Fitted <- switch(tsf,
@@ -2070,7 +2070,7 @@ if(!conditional){
 			for(j in 1:nq){
 			fit <- try(do.call(rq.wfit, args = list(x = x, y = newresponse, tau = tau[j], weights = w, method = method)), silent = TRUE)
 				
-				if(class(fit)!="try-error"){
+				if(!inherits(fit, "try-error")){
 				Fitted <- invmcjII(drop(x %*% fit$coefficients), lambda[i], delta[k], dbounded)
 				matLoss[i,k,j] <- l1Loss(y - Fitted, tau = tau[j], weights = w)
 				}
@@ -2205,7 +2205,7 @@ Fitted <- matrix(NA, n, nq)
 for(j in 1:nq){
 	fit[[j]] <- try(optim(par = start, fn = f, method = "Nelder-Mead", dataLs = list(x = x, y = y, dbounded = dbounded, tau = tau[j], weights = w)), silent = T)
 
-	if(class(fit[[j]])!="try-error"){
+	if(!inherits(fit[[j]], "try-error")){
 		betahat[,j] <- fit[[j]]$par[-c(1:2)]
 		parhat[,j] <- c(fit[[j]]$par[1], fit[[j]]$par[2])
 		Fitted[,j] <- invmcjII(x %*% matrix(betahat[,j]), parhat[1,j], parhat[2,j], dbounded)
@@ -2353,7 +2353,7 @@ if(type == "maref"){
 
 terms2expr <- function(object){
 
-if(!"terms" %in% class(object)) stop("Only objects of class 'terms'")
+if(!inherits(object, "terms")) stop("Only objects of class 'terms'")
 
 Irm <- function(x){
 	n <- nchar(x)
@@ -2625,7 +2625,7 @@ return(object$y - object$fitted.values)
 
 coef.rqt <- coefficients.rqt <- function(object, all = FALSE, ...){
 
-if(!class(object) %in% c("rqt")) stop("Class 'rqt' only")
+if(!inherits(object, "rqt")) stop("Class 'rqt' only")
 
 tau <- object$tau
 nq <- length(tau)
@@ -2865,8 +2865,8 @@ for(j in 1:nq){
 	d <- cbind(x,d2)
 	H <- A %*% (t(f0*d) %*% d2)/n
 	Hinv <- try(chol2inv(chol(H)), silent = TRUE)
-	if(class(Hinv) == "try-error") Hinv <- try(solve(H), silent = TRUE)
-	if(class(Hinv) == "try-error"){
+	if(inherits(Hinv, "try-error")) Hinv <- try(solve(H), silent = TRUE)
+	if(inherits(Hinv, "try-error")){
 		Hinv <- matrix(NA, p + 1, p + 1)
 		warning("Singular 'H' matrix")
 	}
@@ -3534,7 +3534,7 @@ sel <- rep(TRUE, M)
 for (i in 1:M) {
 	tmpInv <- try(solve(t(x * multiplier[, i]) %*% x/n), 
 		silent = TRUE)
-	if (class(tmpInv) != "try-error") 
+	if (!inherits(tmpInv, "try-error"))
 		{d[, , i] <- tmpInv}
 	else {sel[i] <- FALSE}
 }
@@ -3758,7 +3758,7 @@ addnoise <- function(x, centered = TRUE, B = 0.999)
 
 KhmaladzeFormat <- function(object, epsilon){
 
-if(class(object) != "KhmaladzeTest") stop("class(object) must be 'KhmaladzeTest'")
+if(!inherits(object, "KhmaladzeTest")) stop("class(object) must be 'KhmaladzeTest'")
 tt <- get("KhmaladzeTable")
 if(!(epsilon %in% unique(tt$epsilon))) stop("'epsilon' must be in c(0.05,0.10,0.15,0.20,0.25,0.30)")
 
