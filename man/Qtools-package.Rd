@@ -12,7 +12,7 @@ The package Qtools provides functions for unconditional and conditional quantile
 Package: \tab Qtools\cr
 Type: \tab Package\cr
 Version: \tab 1.5.1\cr
-Date: \tab 2019-10-08\cr
+Date: \tab 2019-12-13\cr
 License: \tab GPL (>=2)\cr
 LazyLoad: \tab yes\cr
 }
