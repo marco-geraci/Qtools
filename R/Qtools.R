@@ -168,9 +168,9 @@ G <- cbind(Fhat[,1]/2, G)
 r <- c(max(G[,1]), min(G[,ncol(G)]))
 
 attr(G, "range") <- r
-bw <- if(ecdf_est == "npc") bw else NULL
+ecdf_fit <- if(ecdf_est == "npc") bw else fitbin
 
-ans <- list(G = G, Fhat = Fhat, Fse = Fse, yo = yo, bw = bw, ecdf_est = ecdf_est)
+ans <- list(G = G, Fhat = Fhat, Fse = Fse, yo = yo, ecdf_fit = ecdf_fit, ecdf_est = ecdf_est)
 class(ans) <- "cmidecdf"
 
 return(ans)
@@ -492,7 +492,7 @@ if(numerical){
 } else {
 	xb <- as.matrix(predict(object, type = "link")) # xb includes the offset
 	xx <- solve(crossprod(x))
-	rate <- if(object$midFit$ecdf_est == "npc") prod(object$midFit$bw$xbw)*n else 1
+	rate <- if(object$midFit$ecdf_est == "npc") prod(object$midFit$ecdf_fit$xbw)*n else 1
 	Fvec <- as.vector(object$midFit$Fhat)
 	r <- attr(G, "range")
 
@@ -557,7 +557,78 @@ return(object)
 
 }
 
+
+midq2q <- function(object, newdata, ...){
+
+tau <- object$tau
+nt <- length(tau)
+ecdf_fit <- object$midFit$ecdf_fit
+yo <- object$midFit$yo
+x <- model.matrix(object$formula[-2], newdata)
+n <- nrow(x)
+p <- ncol(x)
+xnpc <- if(object$intercept) x[, 2:p, drop = FALSE] else x
+if(object$midFit$ecdf_est == "npc"){
+	Fhat <- mapply(function(obj, x, y, n) npcdist(bws = obj, exdat = x, eydat = ordered(rep(y, n)))$condist, yo, MoreArgs = list(obj = ecdf_fit, x = xnpc, n = n))
+} else {
+	Fhat <- sapply(ecdf_fit, predict, type = "response")
+}
+
+# rearrange if CDF is not monotone
+for(j in 1:n){
+	tmp <- Fhat[j,]
+	if(any(diff(tmp) < 0)){
+		sf <- rearrange(stepfun(yo, c(tmp,tmp[length(yo)])))
+		Fhat[j,] <- sf(yo)
+	}
+}
+
+M <- apply(Fhat, 1, diff)
+if (ncol(Fhat) > 2) 
+	M <- t(M)
+Ghat <- Fhat[, -1] - 0.5 * M
+Ghat <- cbind(Fhat[, 1]/2, Ghat)
+Hhat <- predict(object, newdata = newdata)
+csi <- tmp <- matrix(NA, n, nt)
+for(j in 1:n){
+	sel <- findInterval(Hhat[j,], yo, all.inside = TRUE)
+	low <- yo[sel] 
+	up <- yo[sel + 1] 
+	gamma <- (Hhat[j,] - low)/(up - low)
+	pstar <- as.numeric((1-gamma)*Ghat[j,sel] + gamma*Ghat[j,sel + 1])
+	sel <- findInterval(pstar, Ghat[j,])
+	csi[j,] <- ifelse(pstar > Fhat[j,sel], ceiling(Hhat[j,]), floor(Hhat[j,]))
+	tmp[j,] <- Fhat[j,sel]
+}
+colnames(csi) <- tau
+rownames(csi) <- rownames(x)
+attr(csi, "Fhat") <- tmp
+class(csi) <- "midq2q"
+
+return(csi)
+
+}
+
+
 # Plot and print functions
+
+plot.midq2q <- function(x, ..., xlab = "p", ylab = "Quantile", main = "Ordinary Quantile Function", sub = TRUE, verticals = TRUE, col.01line = "gray70", col.steps = "gray70", col.midline ="black", cex.points = 1, lty.midline = 2, lwd = 1, jumps = FALSE){
+
+n <- nrow(x)
+k <- ncol(x)
+Fhat <- attr(x, "Fhat")
+yl <- range(x)
+
+if(n > 1) par(mfrow = c(ceiling(n/3), min(c(2,n))))
+
+for(j in 1:n){
+	sf <- stepfun(Fhat[j,], c(x[j,], x[j,k]))
+	subtext <- paste("id = ", j)
+	plot.stepfun(sf, xlab = xlab, ylab = ylab, main = main, verticals = verticals, col = col.steps, pch = pch, cex.points = cex.points, col.points = col.steps, do.points = jumps, xlim = c(0,1), ylim = yl, ...)
+	if(sub) mtext(text = subtext, side = 3, line = 0.5, cex = 0.8)
+}
+
+}
 
 plot.midecdf <- function(x, ..., ylab = "p", main = "Ordinary and Mid-ECDF", verticals = FALSE, col.01line = "gray70", col.steps = "gray70", col.midline ="black", cex.points = 1, lty.midline = 2, lwd = 1, jumps = FALSE){
 
