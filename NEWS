@@ -4,7 +4,7 @@ Changes in Qtools
 
 Version 1.0 (February 2, 2016)
 
-- Package Qtools on CRAN
+- package Qtools on CRAN
 
 =============================================
 
@@ -33,16 +33,16 @@ Version 1.2 (December 28, 2016)
 
 Version 1.3 (April 20, 2018)
 
-- Added bootstrap sampling in mice.impute.rq
-- More robust checks in nlrq1 and nlLoss
+- added bootstrap sampling in mice.impute.rq
+- more robust checks in nlrq1 and nlLoss
 
 =============================================
 
 Version 1.4.1 (July 13, 2019)
 
-- New function midrq to fit mid-quantile regression with discrete responses
-- New function midecdf to fit conditional mid-distribution functions
-- Faster implementation of GOFTest (rcTest) in C++
+- new function midrq to fit mid-quantile regression with discrete responses
+- new function midecdf to fit conditional mid-distribution functions
+- faster implementation of GOFTest (rcTest) in C++
 - rq.counts no longer supports tranformations other than logarithmic
 - removed functions for quantile regression with binary responses
 
@@ -50,15 +50,18 @@ Version 1.4.1 (July 13, 2019)
 
 Version 1.5.1 (December 13, 2019)
 
-- Fixed CRAN error related to _R_CLASS_MATRIX_ARRAY_ starting from R 4.0.0
+- fixed CRAN error related to _R_CLASS_MATRIX_ARRAY_ starting from R 4.0.0
 - added robust option for vcov.midrq
 - fixed bad coding in vcov.midrq that would lead to memory overload 
 
 =============================================
 
-Version 1.5.2 (February 21, 2020)
+Version 1.5.2 (May 25, 2020)
 
-- added function recover_quantile
+- new function midq2q for recovering classical quantiles from midquantiles
+- new functions for directional quantile classification (dqc)
+- fixed minor bug in vcov.midrq
+- fixed bug in rq.counts
 
 =============================================
 

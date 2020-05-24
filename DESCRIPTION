@@ -2,21 +2,24 @@ Package: Qtools
 Type: Package
 Title: Utilities for Quantiles
 Version: 1.5.2
-Date: 2020-02-21
+Date: 2020-05-25
 Authors@R: c(
 	person(given="Marco", family="Geraci", role=c("aut", "cph", "cre"), email="geraci@mailbox.sc.edu", comment = c(ORCID = "0000-0002-6311-8685")),
-	person(given="Alessio", family="Farcomeni", role=c("ctb"), email="alessio.farcomeni@uniroma1.it", comment = "Contributions to midrq code"))
+	person(given="Alessio", family="Farcomeni", role=c("ctb"), email="alessio.farcomeni@uniroma2.it", comment = c("Contributions to midrq code", ORCID = "0000-0002-7104-5826")),
+	person(given="Cinzia", family="Viroli", role=c("ctb"), email="cinzia.viroli@unibo.it", comment = c("Contributions to dqc code", ORCID = "0000-0002-3278-5266"))
+	)
 Maintainer: Marco Geraci <geraci@mailbox.sc.edu>
 Depends: R (>= 3.0.0)
-Imports: utils, glmx, grDevices, graphics, stats, MASS, Matrix, np, quantreg, mice, boot, numDeriv (>= 2016.8-1), Rcpp (>= 0.12.13)
+Imports: utils, glmx, grDevices, graphics, gtools, stats, MASS, Matrix, np, quantreg, mice, boot, numDeriv (>= 2016.8-1), Rcpp (>= 0.12.13)
 LinkingTo: Rcpp, RcppArmadillo
 Suggests: survey, knitr, rmarkdown
 VignetteBuilder: knitr
 Description: Functions for unconditional and conditional quantiles. These
     include methods for transformation-based quantile regression,
     quantile-based measures of location, scale and shape, methods for quantiles
-    of discrete variables, quantile-based multiple imputation, and restricted
-    quantile regression. A vignette is given in Geraci (2016, The R Journal)
-	<doi:10.32614/RJ-2016-037> and included in the package.
+    of discrete variables, quantile-based multiple imputation, restricted
+    quantile regression, and directional quantile classification. A vignette
+	is given in Geraci (2016, The R Journal) <doi:10.32614/RJ-2016-037> and
+	included in the package.
 License: GPL (>= 2)
 LazyLoad: yes

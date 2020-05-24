@@ -147,19 +147,26 @@ if(ecdf_est == "ao"){
 	fitbin <- apply(Z, 2, function(z, x, theta) suppressWarnings(glm.ao(x = x, y = z, theta = theta)), x = x, theta = theta)
 	Fhat <- sapply(fitbin, predict, type = "response")
 	Fse <- sapply(fitbin, function(x) predict(x, type = "response", se.fit = TRUE)$se.fit)
-}
-
-if(ecdf_est == "identity"){
-	fitbin <- apply(Z, 2, function(z, x) suppressWarnings(lm(z ~ x - 1)), x = x)
-	Fhat <- sapply(fitbin, predict, type = "response")
-	Fse <- sapply(fitbin, function(x) predict(x, type = "response", se.fit = TRUE)$se.fit)
+	bhat <- sapply(fitbin, coef) # p x K
+	linkinv <- family(fitbin[[1]])$linkinv
 }
 
 if(ecdf_est %in% c("logit", "probit", "cloglog")){
 	fitbin <- apply(Z, 2, function(z, x, link) suppressWarnings(glm(z ~ x - 1, family = binomial(link))), x = x, link = ecdf_est)
 	Fhat <- sapply(fitbin, predict, type = "response")
 	Fse <- sapply(fitbin, function(x) predict(x, type = "response", se.fit = TRUE)$se.fit)
+	bhat <- sapply(fitbin, coef) # p x K
+	linkinv <- family(fitbin[[1]])$linkinv
 }
+
+if(ecdf_est == "identity"){
+	fitbin <- apply(Z, 2, function(z, x) suppressWarnings(lm(z ~ x - 1)), x = x)
+	Fhat <- sapply(fitbin, predict, type = "response")
+	Fse <- sapply(fitbin, function(x) predict(x, type = "response", se.fit = TRUE)$se.fit)
+	bhat <- sapply(fitbin, coef) # p x K
+	linkinv <- function(eta) eta
+}
+
 
 M <- apply(Fhat, 1, diff)
 if(ncol(Fhat) > 2) M <- t(M)
@@ -168,7 +175,7 @@ G <- cbind(Fhat[,1]/2, G)
 r <- c(max(G[,1]), min(G[,ncol(G)]))
 
 attr(G, "range") <- r
-ecdf_fit <- if(ecdf_est == "npc") bw else fitbin
+ecdf_fit <- if(ecdf_est == "npc") bw else list(coef = bhat, linkinv = linkinv)
 
 ans <- list(G = G, Fhat = Fhat, Fse = Fse, yo = yo, ecdf_fit = ecdf_fit, ecdf_est = ecdf_est)
 class(ans) <- "cmidecdf"
@@ -506,7 +513,7 @@ if(numerical){
 
 		up <- apply(tau[j] - G, 1, function(x) which(x < 0)[1])
 		low <- up - 1
-		if(any(low == 0)) stop("Something went wrong. Perhaps tau is outside allowed range ", "[", round(r[1], 3), ", " , round(r[2], 3), "]")
+		if(any(low == 0) | any(is.na(low))) stop("Something went wrong. Perhaps tau is outside allowed range ", "[", round(r[1], 3), ", " , round(r[2], 3), "]")
 		nonZero <- c((low - 1)*n + 1:n, (up - 1)*n + 1:n)
 		
 		J2 <- jacobian(func = phi, x = Fvec[nonZero], Fvec = Fvec, nonZero = nonZero, Z = cbind(yo[low], yo[up]), method = "simple", w = x, n = n, k = K, tau = tau[j], yo = yo, offset = object$offset, binary = object$binary, lambda = object$lambda, method.args = list(eps = 1e-6))
@@ -557,7 +564,6 @@ return(object)
 
 }
 
-
 midq2q <- function(object, newdata, ...){
 
 tau <- object$tau
@@ -571,7 +577,7 @@ xnpc <- if(object$intercept) x[, 2:p, drop = FALSE] else x
 if(object$midFit$ecdf_est == "npc"){
 	Fhat <- mapply(function(obj, x, y, n) npcdist(bws = obj, exdat = x, eydat = ordered(rep(y, n)))$condist, yo, MoreArgs = list(obj = ecdf_fit, x = xnpc, n = n))
 } else {
-	Fhat <- sapply(ecdf_fit, predict, type = "response")
+	Fhat <- apply(x %*% ecdf_fit$coef, 2, ecdf_fit$linkinv)
 }
 
 # rearrange if CDF is not monotone
@@ -612,7 +618,7 @@ return(csi)
 
 # Plot and print functions
 
-plot.midq2q <- function(x, ..., xlab = "p", ylab = "Quantile", main = "Ordinary Quantile Function", sub = TRUE, verticals = TRUE, col.01line = "gray70", col.steps = "gray70", col.midline ="black", cex.points = 1, lty.midline = 2, lwd = 1, jumps = FALSE){
+plot.midq2q <- function(x, ..., xlab = "p", ylab = "Quantile", main = "Ordinary Quantile Function", sub = TRUE, verticals = TRUE, col.steps = "gray70", cex.points = 1, jumps = FALSE){
 
 n <- nrow(x)
 k <- ncol(x)
@@ -624,7 +630,7 @@ if(n > 1) par(mfrow = c(ceiling(n/3), min(c(2,n))))
 for(j in 1:n){
 	sf <- stepfun(Fhat[j,], c(x[j,], x[j,k]))
 	subtext <- paste("id = ", j)
-	plot.stepfun(sf, xlab = xlab, ylab = ylab, main = main, verticals = verticals, col = col.steps, pch = pch, cex.points = cex.points, col.points = col.steps, do.points = jumps, xlim = c(0,1), ylim = yl, ...)
+	plot.stepfun(sf, xlab = xlab, ylab = ylab, main = main, verticals = verticals, col = col.steps, cex.points = cex.points, col.points = col.steps, do.points = jumps, xlim = c(0,1), ylim = yl, ...)
 	if(sub) mtext(text = subtext, side = 3, line = 0.5, cex = 0.8)
 }
 
@@ -1725,7 +1731,7 @@ for(j in 1:nq){
 	)
 	class(z) <- "rq"
 	z$na.action <- attr(mf, "na.action")
-	z$formula <- update(formula, newresponse ~ .)
+	z$formula <- stats::update(formula, newresponse ~ .)
 	z$terms <- mt
 	z$xlevels <- .getXlevels(mt, mf)
 	z$call <- call
@@ -1865,7 +1871,7 @@ for(j in 1:nq){
 	)
 	class(z) <- "rq"
 	z$na.action <- attr(mf, "na.action")
-	z$formula <- update(formula, newresponse ~ .)
+	z$formula <- stats::update(formula, newresponse ~ .)
 	z$terms <- mt
 	z$xlevels <- .getXlevels(mt, mf)
 	z$call <- call
@@ -2180,7 +2186,7 @@ for(j in 1:nq){
 	Fitted[,j] <- invmcjII(z$fitted.values, parhat[1,j], parhat[2,j], dbounded)
 	class(z) <- "rq"
 	z$na.action <- attr(mf, "na.action")
-	z$formula <- update(formula, newresponse ~ .)
+	z$formula <- stats::update(formula, newresponse ~ .)
 	z$terms <- mt
 	z$xlevels <- .getXlevels(mt, mf)
 	z$call <- call
@@ -2517,11 +2523,11 @@ flag <- !object$tsf %in% c("mcjII")
 nn <- if(flag) c(object$term.labels, "lambda") else c(object$term.labels, "lambda", "delta")
 
 if(nq == 1){
-	fit <- update(object, data = data[inds,])
+	fit <- stats::update(object, data = data[inds,])
 	val <- fit$coefficients
 	val <- if(flag) c(val, fit$lambda) else c(val, fit$eta)
 } else {
-	fit <- update(object, data = data[inds,])
+	fit <- stats::update(object, data = data[inds,])
 	val <- fit$coefficients
 	val <- if(flag) rbind(val, fit$lambda) else rbind(val, fit$eta)
 }
@@ -3154,7 +3160,7 @@ if (length(weights))
 s.lad <- fit.lad$fitted.values
 gamma <- fit.lad$coefficients
 
-#fit.lad <- rq(update.formula(formula, r.abs ~ .), tau = 0.5, data = data, method = method)
+#fit.lad <- rq(stats::update.formula(formula, r.abs ~ .), tau = 0.5, data = data, method = method)
 #data$s.lad <- fit.lad$fitted
 #gamma <- fit.lad$coefficients
 
@@ -3245,7 +3251,7 @@ all.obs <- rownames(object$x)
 n <- length(all.obs)
 nn <- dimnames(object$coefficients)[[1]]
 
-fit <- update(object, data = data[inds,])
+fit <- stats::update(object, data = data[inds,])
 val <- fit$coefficients
 
 val <- as.vector(val)
@@ -3506,11 +3512,10 @@ lambda <- 0
 nq <- length(tau)
 if (nq > 1) 
 	stop("One quantile at a time")
-if(tsf == "mcjII") stop("'mcjII' not available for rq.counts")
 
 call <- match.call()
 mf <- match.call(expand.dots = FALSE)
-m <- match(c("formula", "data", "subset", "weights", "na.action"), names(mf), 0L)
+m <- match(c("formula", "data", "subset", "weights", "na.action", "offset"), names(mf), 0L)
 mf <- mf[c(1L, m)]
 if (method == "model.frame")
 	return(mf)
@@ -3521,19 +3526,15 @@ mt <- attr(mf, "terms")
 
 x <- model.matrix(mt, mf, contrasts)
 y <- model.response(mf, "numeric")
-w <- as.vector(model.weights(mf))
-if (!is.null(w) && !is.numeric(w)) 
-  stop("'weights' must be a numeric vector")
-if(is.null(w))
-  w <- rep(1, length(y))
 
 p <- ncol(x)
 n <- nrow(x)
 term.labels <- colnames(x)
 
-if (is.null(offset)) 
-	offset <- rep(0, n)
-
+offset <- model.offset(mf)
+if(is.null(offset)) offset <- rep(0, n)
+w <- as.vector(model.weights(mf))
+if(is.null(w)) w <- rep(1, n)
 
 Fn <- function(x, cn){
 	xf <- floor(x)
@@ -3822,6 +3823,165 @@ addnoise <- function(x, centered = TRUE, B = 0.999)
     return(z)
 }
 
+######################################################################
+# Directional quantile classification
+######################################################################
+
+dqcControl <- function(tau.range = c(0.001, 0.999), nt = 50, ndir = 50, seed = NULL){
+
+list(tau.range = tau.range, nt = nt, ndir = ndir, seed = seed)
+
+}
+
+dqc <- function(formula, data, df.test, subset, weights, na.action, control = list(), fit = TRUE){
+
+cl <- match.call()
+mf <- match.call(expand.dots = FALSE)
+m <- match(c("formula", "data", "subset", "weights", "na.action"), names(mf), 0L)
+mf <- mf[c(1L, m)]
+mf$drop.unused.levels <- TRUE
+mf[[1L]] <- quote(stats::model.frame)
+mf <- eval(mf, parent.frame())
+mt <- attr(mf, "terms")
+intercept <- attr(terms.formula(formula), "intercept") == 1
+
+# train dataset
+y <- model.response(mf)
+x <- model.matrix(mt, mf)
+w <- as.vector(model.weights(mf))
+if (!is.null(w) && !is.numeric(w)) 
+	stop("'weights' must be a numeric vector")
+if(intercept){
+	x <- x[,-c(1),drop = FALSE]
+}
+
+# test dataset
+if(!is.null(df.test)){
+	z <- model.matrix(formula[-2], df.test)
+	if(intercept){
+		z <- z[,-c(1),drop = FALSE]
+	}
+} else {
+	z <- NULL
+}
+
+if(is.null(names(control)))
+	control <- dqcControl()
+else {
+	control_default <- dqcControl()
+	control_names <- intersect(names(control), names(control_default))
+	control_default[control_names] <- control[control_names]
+	control <- control_default
+}
+
+FIT_ARGS <- list(x = x, z = z, y = y, control = control)
+
+if(!fit) return(FIT_ARGS)
+
+res <- do.call(dqc.fit, FIT_ARGS)
+
+res$call <- cl
+res$nx <- nrow(x)
+res$nz <- nrow(z)
+res$p <- ncol(x)
+res$control <- control
+class(res) <- "dqc"
+return(res)
+
+}
+
+dqc.fit <- function(x, z, y, control){
+
+.checkfn <- function(x, p) x*(p - (x < 0))
+
+if(!is.null(control$seed)) set.seed(control$seed)
+
+y <- as.factor(y)
+nx <- nrow(x)
+nz <- nrow(z)
+p <- ncol(x)
+
+ndir <- control$ndir
+nt <- control$nt
+B <- ndir*nt
+groups <- levels(y)
+ng <- length(groups)
+
+if(is.null(row.names(x))) row.names(x) <- 1:nx
+if(is.null(row.names(z))) row.names(z) <- 1:nz
+
+# generate grid of taus
+taus <- seq(control$tau.range[1], control$tau.range[2], length = nt)
+
+# order data
+ord <- order(y)
+x <- x[ord,]
+y <- y[ord]
+idx <- row.names(x)
+idz <- row.names(z)
+
+# marginal quantiles
+csi <- lapply(split(data.frame(x), y), function(z, taus) apply(z, 2, quantile, probs = taus), taus = taus)
+# element-wise signs for all combinations
+c_groups <- gtools::combinations(n = ng, r = 2, v = groups, repeats.allowed = FALSE)
+nc <- nrow(c_groups)
+dir.sgn <- apply(c_groups, 1, function(i, x) sign(x[i][[1]] - x[i][[2]]), x = csi) # (nt x p) x nc
+
+xu <- array(NA, dim = c(nx, ndir, nt), dimnames = list(obs = idx, dir = 1:ndir, tau = taus))
+zu <- array(NA, dim = c(nz, ndir, nt), dimnames = list(obs = idz, dir = 1:ndir, tau = taus))
+
+for (j in 1:nt) {
+	# generate grid of directions uniformly over the p-dimensional unit sphere
+	#theta <- matrix(runif(ndir * (p-1), 0, 2*pi), nrow = ndir, ncol = (p-1))
+	#u <- mvmesh::Polar2Rectangular(r = rep(1, ndir), theta = theta) # ndir x p
+	sgn.sel <- dir.sgn[seq(j, nt*p, by = nt),sample(1:nc, 1)]
+	u <- matrix(runif(ndir * p, 0, 1), nrow = ndir, ncol = p)
+	u <- sweep(u, 2, sgn.sel, "*")
+	u <- t(apply(u, 1, function(x) x/sqrt(sum(x^2))))
+	xu[,,j] <- tcrossprod(x, u) # nx x ndir
+	zu[,,j] <- tcrossprod(z, u) # nz x ndir
+} 
+
+xu <- matrix(as.numeric(xu), nrow = nx) # nx x B
+zu <- matrix(as.numeric(zu), nrow = nz) # nx x B
+
+ns <- as.integer(table(y))
+minn <- c(0, cumsum(ns[-ng]))
+maxn <- cumsum(ns)
+
+Phi <- C_phifun(xu, zu, nx, nz, B, ndir, ng, taus, minn, maxn)
+
+w <- colSums(Phi$out)
+w <- w/sqrt(sum(w^2))
+
+dist.z <- matrix(0, nz, ng)
+for (i in 1:ng){
+	ss <- seq(i, ng*B, by = ng)
+	dist.z[,i] <- Phi$Phi_z[, ss, drop = FALSE]%*%w
+}
+index <- apply(dist.z, 1, which.min)
+
+ans <- data.frame(obs = idz, groups = factor(groups[index], levels = groups, labels = groups), value = apply(dist.z, 1, min))
+list(ans = ans, groups = groups)
+
+}
+
+print.dqc <- function(x, ...){
+
+z <- table(x$ans$groups)/x$nz*100
+
+cat("Directional quantile classification", "\n")
+if (!is.null(cl <- x$call)) {
+	cat("Call:\n")
+	dput(cl)
+	cat("\n")
+	cat("Classification proportions (%) by class:\n")
+	print(z)
+	cat("\n")
+}
+
+
+}
 
 ##################################################
 ### Khmaladze and other tests

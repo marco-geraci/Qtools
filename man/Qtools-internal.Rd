@@ -40,10 +40,12 @@
 \alias{C_midrqLoss_bc}
 \alias{C_midrqLoss_ao}
 \alias{C_rcTest}
+\alias{C_phifun}
 \alias{_Qtools_C_midrqLoss}
 \alias{_Qtools_C_midrqLoss_bc}
 \alias{_Qtools_C_midrqLoss_ao}
 \alias{_Qtools_C_rcTest}
+\alias{_Qtools_C_phifun}
 
 
 \description{Internal Qtools objects.}

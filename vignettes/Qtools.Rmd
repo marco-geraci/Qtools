@@ -9,7 +9,7 @@ author: Marco Geraci, University of South Carolina
 vignette: >
   %\VignetteIndexEntry{Qtools: A Collection of Models and Tools for Quantile Inference}
   %\VignetteEngine{knitr::rmarkdown}
-  \usepackage[utf8]{inputenc}
+  %\usepackage[utf8]{inputenc}
 ---
 
 

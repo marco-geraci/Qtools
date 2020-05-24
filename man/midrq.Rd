@@ -9,8 +9,7 @@ This function is used to fit a mid-quantile regression model when the response i
 }
 \usage{
 midrq(formula, data, tau = 0.5, lambda = NULL, subset, weights, na.action,
-	contrasts = NULL, offset, type = 1, midFit = NULL, bws = NULL,
-	control = list())
+	contrasts = NULL, offset, type = 1, midFit = NULL, control = list())
 midrq.fit(x, y, offset, lambda, binary, midFit, type, tau, method)
 }
 
@@ -19,7 +18,7 @@ midrq.fit(x, y, offset, lambda, binary, midFit, type, tau, method)
 an object of class \code{\link{formula}}: a symbolic description of the model to be fitted.
 }
   \item{data}{
-an optional data frame, list or environment (or object coercible by as.data.frame to a data frame) containing the variables in the model. If not found in data, the variables are taken from environment(formula), typically the environment from which \code{rq.counts} is called.
+an optional data frame, list or environment (or object coercible by as.data.frame to a data frame) containing the variables in the model. If not found in data, the variables are taken from environment(formula), typically the environment from which \code{midrq} is called.
 }
   \item{tau}{
 quantile to be estimated. This can be a vector of quantiles in \code{midrq}, but must be one single quantile in \code{midrq.fit}.
@@ -47,9 +46,6 @@ estimation method for the fitting process. See details.
 }
   \item{midFit}{
 \code{cmidecdf} object used for fitting conditional mid-quantiles. If set to \code{NULL} in \code{midrq}, it is automatically created. It must be provided in \code{midrq.fit}.
-}
-  \item{bws}{
-optional bandwidth specification. See \code{\link{npcdist}} for more details.
 }
   \item{control}{
 list of control parameters of the fitting process. See \code{\link{midrqControl}}.

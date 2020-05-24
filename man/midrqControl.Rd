@@ -2,7 +2,7 @@
 \alias{midrqControl}
 
 \title{
-Control parameters for aqmm estimation
+Control parameters for midrq estimation
 }
 \description{
 A list of parameters for controlling the fitting process.

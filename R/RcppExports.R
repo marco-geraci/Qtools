@@ -17,3 +17,7 @@ C_rcTest <- function(x, psi, omega, n, p, B) {
     .Call(`_Qtools_C_rcTest`, x, psi, omega, n, p, B)
 }
 
+C_phifun <- function(x, z, nx, nz, B, ndir, ng, taus, minn, maxn) {
+    .Call(`_Qtools_C_phifun`, x, z, nx, nz, B, ndir, ng, taus, minn, maxn)
+}
+
