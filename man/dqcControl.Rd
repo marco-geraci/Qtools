@@ -9,7 +9,7 @@ A list of parameters for controlling the fitting process.
 }
 
 \usage{
-dqcControl(tau.range = c(0.001, 0.999), nt = 50, ndir = 50, seed = NULL)
+dqcControl(tau.range = c(0.001, 0.999), nt = 10, ndir = 50, seed = NULL)
 }
 
 \arguments{

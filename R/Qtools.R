@@ -3827,7 +3827,7 @@ addnoise <- function(x, centered = TRUE, B = 0.999)
 # Directional quantile classification
 ######################################################################
 
-dqcControl <- function(tau.range = c(0.001, 0.999), nt = 50, ndir = 50, seed = NULL){
+dqcControl <- function(tau.range = c(0.001, 0.999), nt = 10, ndir = 50, seed = NULL){
 
 list(tau.range = tau.range, nt = nt, ndir = ndir, seed = seed)
 
