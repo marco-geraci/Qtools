@@ -14,7 +14,7 @@ dqcControl(tau.range = c(0.001, 0.999), nt = 50, ndir = 50, seed = NULL)
 
 \arguments{
 	\item{tau.range}{
-		vector with range of quantile probabilities.
+		vector with range of quantile probabilities. See details. 
 	}
 
 	\item{nt}{
@@ -29,6 +29,10 @@ dqcControl(tau.range = c(0.001, 0.999), nt = 50, ndir = 50, seed = NULL)
 		seed for \code{\link{set.seed}}.
 	}
 
+}
+
+\details{
+A directional quantile classifier (Viroli et al, 2020) is computed over a grid of quantile probabilities. The vector \code{tau.range} must be of length 2, providing a minimum and a maximum for the grid, or of length 1, in which case the grid will have only one probability equal to tau.range. In the latter case \code{nt} is ignored and set equal to 1.
 }
 
 

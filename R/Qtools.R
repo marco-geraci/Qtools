@@ -3843,7 +3843,7 @@ mf$drop.unused.levels <- TRUE
 mf[[1L]] <- quote(stats::model.frame)
 mf <- eval(mf, parent.frame())
 mt <- attr(mf, "terms")
-intercept <- attr(terms.formula(formula), "intercept") == 1
+intercept <- attr(terms.formula(formula, data = mf), "intercept") == 1
 
 # train dataset
 y <- model.response(mf)
@@ -3885,6 +3885,8 @@ res$nx <- nrow(x)
 res$nz <- nrow(z)
 res$p <- ncol(x)
 res$control <- control
+res$terms <- mt
+res$term.labels <- colnames(x)
 class(res) <- "dqc"
 return(res)
 
@@ -3903,7 +3905,6 @@ p <- ncol(x)
 
 ndir <- control$ndir
 nt <- control$nt
-B <- ndir*nt
 groups <- levels(y)
 ng <- length(groups)
 
@@ -3911,7 +3912,24 @@ if(is.null(row.names(x))) row.names(x) <- 1:nx
 if(is.null(row.names(z))) row.names(z) <- 1:nz
 
 # generate grid of taus
-taus <- seq(control$tau.range[1], control$tau.range[2], length = nt)
+tau.range <- control$tau.range
+if(any(is.na(tau.range))){
+	stop("tau.range must not have NAs")
+}
+if(length(tau.range) == 1){
+	taus <- tau.range
+	nt <- 1
+}
+if(length(tau.range) == 2){
+	tau.range <- sort(tau.range)
+	taus <- seq(tau.range[1], tau.range[2], length = nt)
+}
+if(!length(tau.range) %in% c(1,2)){
+	stop("I cannot understand 'tau.range'. It must be of length 1 or 2.")
+}
+if(any(taus <= 0) | any(taus >= 1)){
+	stop("taus must be strictly in the unit interval (0,1)")
+}
 
 # order data
 ord <- order(y)
@@ -3935,13 +3953,12 @@ for (j in 1:nt) {
 	#theta <- matrix(runif(ndir * (p-1), 0, 2*pi), nrow = ndir, ncol = (p-1))
 	#u <- mvmesh::Polar2Rectangular(r = rep(1, ndir), theta = theta) # ndir x p
 	sgn.sel <- dir.sgn[seq(j, nt*p, by = nt),sample(1:nc, 1)]
-	u <- matrix(runif(ndir * p, 0, 1), nrow = ndir, ncol = p)
-	u <- sweep(u, 2, sgn.sel, "*")
-	u <- t(apply(u, 1, function(x) x/sqrt(sum(x^2))))
-	xu[,,j] <- tcrossprod(x, u) # nx x ndir
-	zu[,,j] <- tcrossprod(z, u) # nz x ndir
-} 
+	out <- C_projfun(x, z, sgn.sel, nx, nz, p, ndir)
+	xu[,,j] <- out$xu
+	zu[,,j] <- out$zu
+}
 
+B <- ndir*nt
 xu <- matrix(as.numeric(xu), nrow = nx) # nx x B
 zu <- matrix(as.numeric(zu), nrow = nz) # nx x B
 

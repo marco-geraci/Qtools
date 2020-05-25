@@ -316,6 +316,40 @@ List C_rcTest(NumericMatrix x, NumericVector psi, NumericMatrix omega, int n, in
 
 }
 
+
+// [[Rcpp::export]]
+List C_projfun(NumericMatrix x, NumericMatrix z, NumericVector sgn, int nx, int nz, int p, int ndir){
+
+NumericMatrix xu(nx,ndir);
+NumericMatrix zu(nz,ndir);
+
+for(int i = 0; i < ndir; ++i){
+	NumericVector u = runif(p);
+	double norm = 0;
+	for(int j = 0; j < p; ++j){
+		u[j] = u[j]*sgn[j];
+		norm += pow(u[j], 2);
+	}
+	norm = ::sqrt(norm);
+	
+	for(int ii = 0; ii < nx; ++ii){
+		for(int j = 0; j < p; ++j){
+			xu(ii,i) += x(ii,j)*(u[j]/norm);
+		}
+	}
+	for(int ii = 0; ii < nz; ++ii){
+		for(int j = 0; j < p; ++j){
+			zu(ii,i) += z(ii,j)*(u[j]/norm);			
+		}
+	}
+}
+
+List L = List::create(Named("xu") = xu, Named("zu") = zu);
+
+return L;
+
+}
+
 // [[Rcpp::export]]
 List C_phifun(NumericMatrix x, NumericMatrix z, int nx, int nz, int B, int ndir, int ng, NumericVector taus, IntegerVector minn, IntegerVector maxn){
 
