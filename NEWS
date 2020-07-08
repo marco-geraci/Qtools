@@ -56,12 +56,12 @@ Version 1.5.1 (December 13, 2019)
 
 =============================================
 
-Version 1.5.2 (May 25, 2020)
+Version 1.5.2 (July 8, 2020)
 
 - new function midq2q for recovering classical quantiles from midquantiles
-- new functions for directional quantile classification (dqc)
 - fixed minor bug in vcov.midrq
 - fixed bug in rq.counts
+- revised plot.qlss and documentation file to avoid error on Mac
 
 =============================================
 

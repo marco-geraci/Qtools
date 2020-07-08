@@ -11,9 +11,11 @@ Compute conditional mid-cumulative probabilities
 }
 
 \usage{
-cmidecdf(formula, data, ecdf_est = "npc", bws = NULL, theta = NULL,
-	subset, weights, na.action, contrasts = NULL)
-cmidecdf.fit(x, y, intercept, ecdf_est, bws = NULL, theta = NULL)
+cmidecdf(formula, data, ecdf_est = "npc", npc_args = list(),
+	theta = NULL, subset, weights, na.action,
+	contrasts = NULL)
+cmidecdf.fit(x, y, intercept, ecdf_est, npc_args = list(),
+	theta = NULL)
 }
 
 \arguments{
@@ -26,8 +28,8 @@ an optional data frame, list or environment (or object coercible by as.data.fram
   \item{ecdf_est}{
 estimator of the (standard) conditional cumulative distribution. The options are: \code{npc} (default) for kernel estimator (Li and Racine, 2008); \code{logit}, \code{probit}, \code{cloglog} for binomial regression; \code{ao} for Aranda-Ordaz binomial regression.
 }
-  \item{bws}{
-optional bandwidth specification. See \code{\link{npcdist}} for more details.
+  \item{npc_args}{
+	named list of arguments for \code{\link{npcdistbw}} when \code{ecdf_est = npc}.
 }
   \item{theta}{
 values of the Aranda-Ordaz transformation parameter for grid search when \code{ecdf_est = "ao"}.

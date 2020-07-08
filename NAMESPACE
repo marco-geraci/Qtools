@@ -1,8 +1,8 @@
 useDynLib(Qtools, .registration = TRUE)
 importFrom("graphics", "abline", "lines", "mtext", "par", "plot", "points", "segments") 
 importFrom("grDevices", "grey")
+importFrom("Gmisc", "fastDoCall")
 importFrom("glmx", "ao1")
-importFrom("gtools", "combinations")
 importFrom("Rcpp", "evalCpp")
 importFrom("utils", "packageDescription", "getFromNamespace")
 
@@ -43,7 +43,6 @@ S3method(predict, rq.counts)
 S3method(predict, qlss)
 
 S3method(print, cmidecdf)
-S3method(print, dqc)
 S3method(print, GOFTest)
 S3method(print, midecdf)
 S3method(print, midquantile)

@@ -9,7 +9,7 @@ A list of parameters for controlling the fitting process.
 }
 
 \usage{
-midrqControl(method = "Nelder-Mead", ecdf_est = "npc")
+midrqControl(method = "Nelder-Mead", ecdf_est = "npc", npc_args = list())
 }
 
 \arguments{
@@ -19,6 +19,9 @@ midrqControl(method = "Nelder-Mead", ecdf_est = "npc")
 
 	\item{ecdf_est}{
 		estimator of the (standard) conditional cumulative distribution. The options are: \code{npc} (default) for kernel estimator (Li and Racine, 2008); \code{logit}, \code{probit}, \code{cloglog} for binomial regression; \code{ao} for Aranda-Ordaz binomial regression.
+	}
+	\item{npc_args}{
+		named list of arguments for \code{\link{npcdistbw}} when \code{ecdf_est = npc}.
 	}
 
 }
