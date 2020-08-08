@@ -96,6 +96,11 @@ fit <- dqc(Species ~ Sepal.Length + Petal.Length,
 # Data frame with predictions
 fit$ans
 
+# Confusion matrix
+print(cm <- xtabs( ~ fit$ans$groups + df2$Species))
+
+# Misclassification rate
+1-sum(diag(cm))/nrow(df2)
 }
 
 }

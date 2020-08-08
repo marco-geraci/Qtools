@@ -65,3 +65,9 @@ Version 1.5.2 (July 8, 2020)
 
 =============================================
 
+Version 1.5.3 (August 8, 2020)
+
+- new functions for directional quantile classification (dqc)
+
+=============================================
+

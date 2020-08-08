@@ -315,3 +315,117 @@ List C_rcTest(NumericMatrix x, NumericVector psi, NumericMatrix omega, int n, in
 	return ans;
 
 }
+
+
+// [[Rcpp::export]]
+List C_projfun(NumericMatrix x, NumericMatrix z, NumericVector sgn, int nx, int nz, int p, int ndir){
+
+NumericMatrix xu(nx,ndir);
+NumericMatrix zu(nz,ndir);
+
+for(int i = 0; i < ndir; ++i){
+	NumericVector u = runif(p);
+	double norm = 0;
+	for(int j = 0; j < p; ++j){
+		u[j] = u[j]*sgn[j];
+		norm += pow(u[j], 2);
+	}
+	norm = ::sqrt(norm);
+	
+	for(int ii = 0; ii < nx; ++ii){
+		for(int j = 0; j < p; ++j){
+			xu(ii,i) += x(ii,j)*(u[j]/norm);
+		}
+	}
+	for(int ii = 0; ii < nz; ++ii){
+		for(int j = 0; j < p; ++j){
+			zu(ii,i) += z(ii,j)*(u[j]/norm);			
+		}
+	}
+}
+
+List L = List::create(Named("xu") = xu, Named("zu") = zu);
+
+return L;
+
+}
+
+// [[Rcpp::export]]
+List C_phifun(NumericMatrix x, NumericMatrix z, int nx, int nz, int B, int ndir, int ng, NumericVector taus, IntegerVector minn, IntegerVector maxn){
+
+NumericMatrix Phi_z(nz,B*ng);
+NumericMatrix Phi_x(nx,ng);
+NumericMatrix out(nx,B);
+
+for(int b = 0; b < B; ++b){
+
+	int tt = int(b/ndir);
+	double tau = taus[tt];
+	NumericMatrix Phi_x(nx,ng);
+	
+	for(int k = 0; k < ng; ++k){
+
+		/* directional quantile*/
+		int start = minn[k];
+		int end = maxn[k];
+		int ll = end - start;
+		NumericVector w1(ll);
+		for(int i = start; i < end; ++i){
+			int ii = i - start;
+			w1[ii] = x(i,b);
+		}
+		NumericVector w2 = clone(w1);
+		std::sort(w2.begin(), w2.end());
+		double dq = w2[w1.size()*(tau - 0.000000001)];
+
+		/* distance x*/
+		for(int i = 0; i < nx; ++i){
+			double res = x(i,b);
+			res -= dq;
+			double s = tau;
+			if(res < 0){
+				s -= 1;
+			}
+			Phi_x(i,k) = res*s;
+		} //i
+
+		/* distance z*/
+		int m = k + ng*b;
+		for(int i = 0; i < nz; ++i){
+			double res = z(i,b);
+			res -= dq;
+			double s = tau;
+			if(res < 0){
+				s -= 1;
+			}
+			Phi_z(i,m) = res*s;
+		} //i
+	} //k
+	
+	for(int k = 0; k < ng; ++k){
+
+		int start = minn[k];
+		int end = maxn[k];
+		int ll = end - start;
+		NumericVector Phi_min(ll);
+		for(int i = start; i < end; ++i){
+			NumericVector w = Phi_x(i,_);
+			w[k] = std::numeric_limits<double>::max(); // basically excludes kth column
+			int ii = i - start;
+			Phi_min[ii] = min(w);
+		}
+		
+		for(int i = start; i < end; ++i){
+			int ii = i - start;
+			out(i,b) = Phi_x(i,k) - Phi_min[ii];
+		} //i
+		
+	} //k
+
+} // b
+
+List L = List::create(Named("out") = out, Named("Phi_z") = Phi_z);
+
+return L;
+
+}

@@ -83,12 +83,51 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// C_projfun
+List C_projfun(NumericMatrix x, NumericMatrix z, NumericVector sgn, int nx, int nz, int p, int ndir);
+RcppExport SEXP _Qtools_C_projfun(SEXP xSEXP, SEXP zSEXP, SEXP sgnSEXP, SEXP nxSEXP, SEXP nzSEXP, SEXP pSEXP, SEXP ndirSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type x(xSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type z(zSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type sgn(sgnSEXP);
+    Rcpp::traits::input_parameter< int >::type nx(nxSEXP);
+    Rcpp::traits::input_parameter< int >::type nz(nzSEXP);
+    Rcpp::traits::input_parameter< int >::type p(pSEXP);
+    Rcpp::traits::input_parameter< int >::type ndir(ndirSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_projfun(x, z, sgn, nx, nz, p, ndir));
+    return rcpp_result_gen;
+END_RCPP
+}
+// C_phifun
+List C_phifun(NumericMatrix x, NumericMatrix z, int nx, int nz, int B, int ndir, int ng, NumericVector taus, IntegerVector minn, IntegerVector maxn);
+RcppExport SEXP _Qtools_C_phifun(SEXP xSEXP, SEXP zSEXP, SEXP nxSEXP, SEXP nzSEXP, SEXP BSEXP, SEXP ndirSEXP, SEXP ngSEXP, SEXP tausSEXP, SEXP minnSEXP, SEXP maxnSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type x(xSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type z(zSEXP);
+    Rcpp::traits::input_parameter< int >::type nx(nxSEXP);
+    Rcpp::traits::input_parameter< int >::type nz(nzSEXP);
+    Rcpp::traits::input_parameter< int >::type B(BSEXP);
+    Rcpp::traits::input_parameter< int >::type ndir(ndirSEXP);
+    Rcpp::traits::input_parameter< int >::type ng(ngSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type taus(tausSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type minn(minnSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type maxn(maxnSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_phifun(x, z, nx, nz, B, ndir, ng, taus, minn, maxn));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_Qtools_C_midrqLoss", (DL_FUNC) &_Qtools_C_midrqLoss, 10},
     {"_Qtools_C_midrqLoss_bc", (DL_FUNC) &_Qtools_C_midrqLoss_bc, 11},
     {"_Qtools_C_midrqLoss_ao", (DL_FUNC) &_Qtools_C_midrqLoss_ao, 11},
     {"_Qtools_C_rcTest", (DL_FUNC) &_Qtools_C_rcTest, 6},
+    {"_Qtools_C_projfun", (DL_FUNC) &_Qtools_C_projfun, 7},
+    {"_Qtools_C_phifun", (DL_FUNC) &_Qtools_C_phifun, 10},
     {NULL, NULL, 0}
 };
 
