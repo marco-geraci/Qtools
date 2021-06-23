@@ -1,7 +1,6 @@
 useDynLib(Qtools, .registration = TRUE)
 importFrom("graphics", "abline", "lines", "mtext", "par", "plot", "points", "segments") 
 importFrom("grDevices", "grey")
-importFrom("Gmisc", "fastDoCall")
 importFrom("glmx", "ao1")
 importFrom("gtools", "combinations")
 importFrom("Rcpp", "evalCpp")

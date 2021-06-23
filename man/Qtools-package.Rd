@@ -11,8 +11,8 @@ The package Qtools provides functions for unconditional and conditional quantile
 \tabular{ll}{
 Package: \tab Qtools\cr
 Type: \tab Package\cr
-Version: \tab 1.5.3\cr
-Date: \tab 2020-11-26\cr
+Version: \tab 1.5.5\cr
+Date: \tab 2021-06-23\cr
 License: \tab GPL (>=2)\cr
 LazyLoad: \tab yes\cr
 }
@@ -21,7 +21,7 @@ LazyLoad: \tab yes\cr
 \author{
 Marco Geraci
 
-Maintainer: Marco Geraci <geraci@mailbox.sc.edu>
+Maintainer: Marco Geraci <marco.geraci@uniroma1.it>
 }
 
 \keyword{quantiles}

@@ -71,7 +71,7 @@ An object of class \code{\link{class}} \code{cmidecdf} with mid-cumulative proba
 }
 
 \references{
-Geraci, M. and A. Farcomeni. Mid-quantile regression for discrete responses. arXiv:1907.01945 [stat.ME]. URL: \url{http://arxiv.org/abs/1907.01945}.
+Geraci, M. and A. Farcomeni. Mid-quantile regression for discrete responses. arXiv:1907.01945 [stat.ME]. URL: \url{https://arxiv.org/abs/1907.01945/}.
 
 Li, Q. and J. S. Racine (2008). Nonparametric estimation of conditional cdf and quantile functions with mixed categorical and continuous data. Journal of Business and Economic Statistics 26(4), 423-434.
 

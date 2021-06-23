@@ -1,8 +1,8 @@
 Package: Qtools
 Type: Package
 Title: Utilities for Quantiles
-Version: 1.5.3
-Date: 2020-11-26
+Version: 1.5.5
+Date: 2021-06-23
 Authors@R: c(
 	person(given="Marco", family="Geraci", role=c("aut", "cph", "cre"), email="marco.geraci@uniroma1.it", comment = c(ORCID = "0000-0002-6311-8685")),
 	person(given="Alessio", family="Farcomeni", role=c("ctb"), email="alessio.farcomeni@uniroma2.it", comment = c("Contributions to midrq code", ORCID = "0000-0002-7104-5826")),
@@ -10,7 +10,7 @@ Authors@R: c(
 	)
 Maintainer: Marco Geraci <marco.geraci@uniroma1.it>
 Depends: R (>= 3.0.0)
-Imports: utils, glmx, Gmisc, grDevices, graphics, gtools, stats, MASS, Matrix, np, quantreg, boot, numDeriv (>= 2016.8-1), Rcpp (>= 0.12.13)
+Imports: utils, glmx, grDevices, graphics, gtools, stats, MASS, Matrix, np, quantreg, boot, numDeriv (>= 2016.8-1), Rcpp (>= 0.12.13)
 LinkingTo: Rcpp, RcppArmadillo
 Suggests: survey, mice, knitr, rmarkdown
 VignetteBuilder: knitr

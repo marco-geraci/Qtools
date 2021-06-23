@@ -20,6 +20,7 @@
 \alias{d2mcjI}
 
 \alias{terms2expr}
+\alias{fastDoCall}
 \alias{boot.rrq}
 \alias{boot.rqt}
 \alias{se.rqt}
