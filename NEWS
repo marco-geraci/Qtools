@@ -82,5 +82,7 @@ Version 1.5.4 (February 7, 2021)
 Version 1.5.5 (June 23, 2021)
 
 - Fixed bug in dqc
+- Fixed bug in midq2q
+- Fixed bug in predict.midrq
 
 =============================================
