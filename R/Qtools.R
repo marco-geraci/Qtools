@@ -429,7 +429,7 @@ if (type == "link") {
 }
 if (type == "response") {
 	if(!is.null(lambda)){
-		Fitted <- apply(linpred, 2, invbc, lambda = lambda)
+		Fitted <- apply(linpred, 2, if(object$binary) invao else invbc, lambda = lambda)
 	} else {
 		Fitted <- linpred
 	}
@@ -612,6 +612,8 @@ for(j in 1:n){
 	low <- yo[sel] 
 	up <- yo[sel + 1] 
 	gamma <- (Hhat[j,] - low)/(up - low)
+	gamma <- pmax(gamma, 0)
+	gamma <- pmin(gamma, 1)
 	pstar <- as.numeric((1-gamma)*Ghat[j,sel] + gamma*Ghat[j,sel + 1])
 	sel <- findInterval(pstar, Ghat[j,])
 	csi[j,] <- ifelse(pstar > Fhat[j,sel], ceiling(Hhat[j,]), floor(Hhat[j,]))
