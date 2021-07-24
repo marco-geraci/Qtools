@@ -9,7 +9,7 @@ This function recovers ordinary conditional quantile functions based on fitted m
 }
 
 \usage{
-midq2q(object, newdata, ...)
+midq2q(object, newdata, observed = FALSE, ...)
 }
 
 \arguments{
@@ -20,14 +20,22 @@ midq2q(object, newdata, ...)
   \item{newdata}{
 	a required data frame in which to look for variables with which to predict.
 	}
+  \item{observed}{
+	logical flag. If \code{TRUE}, ordinary quantiles are recovered from observed sample values. Otherwise, they are calcuated as rounded mid-quantiles. See details.
+	}
+
+
  \item{\dots}{
 not used.
 }
 }
 
+\details{
+If the values of the support of the random variable are equally spaced integers, then \code{observed} should ideally be set to \code{FALSE} so that the ordinary quantile is obtained by rounding the predicted mid-quantile. Otherwise, the function returns an integer observed in the sample. See Geraci and Farcomeni for more details.
+}
 
 \value{
-a vector or a matrix of values.
+a vector or a matrix of estimated ordinary quantiles. The attribute \code{Fhat} provides the corresponding estimated cumulative distribution.
 }
 
 

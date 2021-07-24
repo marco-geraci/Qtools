@@ -9,7 +9,7 @@ This function is used to fit a mid-quantile regression model when the response i
 }
 \usage{
 midrq(formula, data, tau = 0.5, lambda = NULL, subset, weights, na.action,
-	contrasts = NULL, offset, type = 1, midFit = NULL, control = list())
+	contrasts = NULL, offset, type = 3, midFit = NULL, control = list())
 midrq.fit(x, y, offset, lambda, binary, midFit, type, tau, method)
 }
 
@@ -70,7 +70,10 @@ logical flag. Is the response binary?
 
 \details{A linear mid-quantile regression model is fitted to the transformed response. The transformation of the response can be changed with the argument \code{lambda}. If \code{lambda = NULL}, then no transformation is applied (i.e., identity); if \code{lambda} is a numeric value, then the Box-Cox transformation is applied (e.g., 0 for log-transformation). However, \code{midrq} will automatically detect whether the response is binary, in which case the Aranda-Ordaz transformation is applied. In contrast, the user must declare whether the response is binary in \code{midrq.fit}.
 
-There are 3 different estimators. \code{type = 1} is based on a general-purpose estimator (i.e., \code{\link{optim}}). \code{type = 2} is similar to \code{type = 1}, except the loss function is averaged over the space of the predictors (i.e., CUSUM). \code{type = 3} is the least-squares estimator discussed by Geraci and Farcomeni (2019).} 
+There are 3 different estimators. \code{type = 1} is based on a general-purpose estimator (i.e., \code{\link{optim}}). \code{type = 2} is similar to \code{type = 1}, except the loss function is averaged over the space of the predictors (i.e., CUSUM). \code{type = 3} is the least-squares estimator discussed by Geraci and Farcomeni (2019).
+
+The warning `tau is outside mid-probabilities range' indicates that there are observations for which tau is below or above the range of the corresponding estimated conditional mid-probabilities. This affects estimation in a way similar to censoring.
+}
 
 \value{
 a list of class \code{midrq} containing the following components
