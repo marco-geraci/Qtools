@@ -201,7 +201,7 @@ midrqControl <- function(method = "Nelder-Mead", ecdf_est = "npc", npc_args = li
 
 }
 
-midrq <- function(formula, data, tau = 0.5, lambda = NULL, subset, weights, na.action, contrasts = NULL, offset, type = 1, midFit = NULL, control = list()){
+midrq <- function(formula, data, tau = 0.5, lambda = NULL, subset, weights, na.action, contrasts = NULL, offset, type = 3, midFit = NULL, control = list()){
 
 cl <- match.call()
 mf <- match.call(expand.dots = FALSE)
@@ -269,11 +269,7 @@ if(p == 1 & intercept){
 	if(is.null(midFit)){
 		midFit <- cmidecdf.fit(x = x, y = y, intercept = intercept, ecdf_est = control$ecdf_est, npc_args = control$npc_args, theta = seq(0, 2, by = 0.05))
 	} else {control$ecdf_est <- midFit$ecdf_est}
-	if(type == 3){
-		# allowed range for tau
-		r <- attr(midFit$G, "range")
-		if(any(tau < r[1]) | any(tau > r[2])) stop("tau is outside allowed range ", "[", round(r[1], 3), ", " , round(r[2], 3), "]")
-	}
+
 	fit <- list()
 	for (j in 1:nq) {
 		fit[[j]] <- midrq.fit(x = x, y = y, offset = offset, lambda = lambda, binary = binary, midFit = midFit, type = type, tau = tau[j], method = control$method)
@@ -367,21 +363,31 @@ if(type %in% c(1,2)){
 				fit <- optim(par = b0, fn = C_midrqLoss_bc, G = midFit$G, x = x, yo = midFit$yo, offset = offset, type = type, tau = tau, lambda = lambda, n = n, p = p, k = length(midFit$yo), method = method)
 			}
 		}
-	fit$pseudoy <- NULL
+		fit$pseudoy <- NULL
 	}
 	
 	fit$InitialPar <- b0
 	
 	} else if(type == 3){
-	
+	k <- length(midFit$yo)	
 	up <- apply(tau - midFit$G, 1, function(x) which(x < 0)[1])
+	FLAG <- sum(up == 1, na.rm = TRUE) + sum(is.na(up))
 	low <- up - 1
+	low[low == 0] <- 1
+	low[is.na(low)] <- k
+	up[is.na(up)] <- k
 	Z <- cbind(midFit$yo[low], midFit$yo[up])
 	PI <- t(apply(midFit$G, 1, function(x, p){
-		sel <- which(p - x < 0)[1]
-		x[c(sel-1, sel)]
+		up <- which(p - x < 0)[1]
+		low <- up - 1
+		low[low == 0] <- 1
+		low[is.na(low)] <- length(x)
+		up[is.na(up)] <- length(x)
+		x[c(low, up)]
 	}, p = tau))
-	B <- (tau - PI[,1])/(PI[,2] - PI[,1])*(Z[,2] - Z[,1]) + Z[,1]
+	gamma <- (tau - PI[,1])/(PI[,2] - PI[,1])
+	gamma[!is.finite(gamma)] <- 0
+	B <- gamma*(Z[,2] - Z[,1]) + Z[,1]
 	if(!is.null(lambda)){
 		if(binary){
 			B <- ao(B, lambda) - offset
@@ -390,7 +396,14 @@ if(type %in% c(1,2)){
 		}
 	} else {B <- B - offset}
 	
+	# is tau outside range?
+	r <- attr(midFit$G, "range")
+	if(any(tau < r[1]) | any(tau > r[2])){
+		warning("tau = ", tau, " is outside mid-probabilities range ", "[", round(r[1], 3), ", " , round(r[2], 3), "] for ", FLAG, " out of ", n, " observations. See details for ?midrq")
+	}
+
 	fit <- list(par = qr.solve(x, B), pseudoy = B)
+
 	}
 
 return(fit)
@@ -575,7 +588,7 @@ return(object)
 
 }
 
-midq2q <- function(object, newdata, ...){
+midq2q <- function(object, newdata, observed = FALSE, ...){
 
 tau <- object$tau
 nt <- length(tau)
@@ -610,14 +623,19 @@ csi <- tmp <- matrix(NA, n, nt)
 for(j in 1:n){
 	sel <- findInterval(Hhat[j,], yo, all.inside = TRUE)
 	low <- yo[sel] 
-	up <- yo[sel + 1] 
-	gamma <- (Hhat[j,] - low)/(up - low)
-	gamma <- pmax(gamma, 0)
-	gamma <- pmin(gamma, 1)
-	pstar <- as.numeric((1-gamma)*Ghat[j,sel] + gamma*Ghat[j,sel + 1])
-	sel <- findInterval(pstar, Ghat[j,])
-	csi[j,] <- ifelse(pstar > Fhat[j,sel], ceiling(Hhat[j,]), floor(Hhat[j,]))
-	tmp[j,] <- Fhat[j,sel]
+	up <- yo[sel + 1]
+	if(observed){
+		csi[j,] <- ifelse(p > Fhat[j,sel], up, low)
+		tmp[j,] <- Fhat[j,sel]
+	} else {
+		gamma <- (Hhat[j,] - low)/(up - low)
+		gamma <- pmax(gamma, 0)
+		gamma <- pmin(gamma, 1)
+		pstar <- as.numeric((1-gamma)*Ghat[j,sel] + gamma*Ghat[j,sel + 1])
+		sel <- findInterval(pstar, Ghat[j,])
+		csi[j,] <- ifelse(pstar > Fhat[j,sel], ceiling(Hhat[j,]), floor(Hhat[j,]))
+		tmp[j,] <- Fhat[j,sel]
+	}
 }
 colnames(csi) <- tau
 rownames(csi) <- rownames(x)
