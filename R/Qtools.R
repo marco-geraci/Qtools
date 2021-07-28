@@ -625,7 +625,7 @@ for(j in 1:n){
 	low <- yo[sel] 
 	up <- yo[sel + 1]
 	if(observed){
-		csi[j,] <- ifelse(p > Fhat[j,sel], up, low)
+		csi[j,] <- ifelse(tau > Fhat[j,sel], up, low)
 		tmp[j,] <- Fhat[j,sel]
 	} else {
 		gamma <- (Hhat[j,] - low)/(up - low)
