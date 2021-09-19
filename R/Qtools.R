@@ -955,7 +955,7 @@ val <- list()
 if(type == "rq"){
 	fitLs <- as.list(mc[fitLs %in% names(formals(rq))])
 	fitLs$data <- mf
-	fitLs$tau <- taus
+	fitLs$tau <- sort(taus) # rq automatically sorts tau, just enforcing here
 	val$fit <- do.call(rq, args = fitLs)
 }
 
@@ -963,11 +963,14 @@ if(type == "rqt"){
 	if(conditional & length(lambda) < length(taus)) stop(paste0("Length of 'lambda' must be ", length(taus), ". See details in '?qlss'"))
 	fitLs <- as.list(mc[fitLs %in% names(formals(tsrq))])
 	fitLs$data <- mf
-	fitLs$tau <- taus
+	fitLs$tau <- sort(taus) # rqt does not sort, but rq does, so...
 	val$fit <- do.call(tsrq, args = fitLs)
 }
 
-Fitted <- val$fit$fitted.values
+# sort wrt taus
+ii <- match(taus,fitLs$tau)
+Fitted <- val$fit$fitted.values[,ii]
+
 vec3 <- Fitted[,1:3]
 vecp <- Fitted[ , -c(1:3), drop = FALSE][ , 1:nq, drop = FALSE]
 vecq <- Fitted[ , -c(1:3), drop = FALSE][ , (nq+1):(2*nq), drop = FALSE]
@@ -1014,7 +1017,7 @@ probs <- object$probs
 nq <- length(probs)
 
 fit <- object$fit
-taus <- fit$tau
+taus <- c(1:3/4, probs, 1-probs)
 
 if(missing(newdata))
 	{x <- fit$x}	else {
@@ -1026,7 +1029,10 @@ if(missing(newdata))
 	x <- model.matrix(Terms, mf, contrasts.arg = fit$contrasts)
 }
 
+# sort wrt taus
+ii <- match(taus, fit$tau)
 Fitted <- x%*%fit$coefficients
+Fitted <- Fitted[,ii]
 
 vecp <- Fitted[ , -c(1:3), drop = FALSE][ , 1:nq, drop = FALSE]
 vecq <- Fitted[ , -c(1:3), drop = FALSE][ , (nq+1):(2*nq), drop = FALSE]
@@ -1043,7 +1049,8 @@ if(interval){
 	B <- lapply(fit.s, function(x) x$B)
 	
 	Fitted <- lapply(B, function(b,x) x%*%t(b), x = x)
-
+	Fitted <- Fitted[ii] # sort wrt to taus
+	
 	sdtrim <- function(u, trim){
 		sel1 <- u >= quantile(u, probs = trim/2, na.rm = TRUE)
 		sel2 <- u <= quantile(u, probs = 1-trim/2, na.rm = TRUE)
@@ -1087,7 +1094,7 @@ probs <- object$probs
 nq <- length(probs)
 
 fit <- object$fit
-taus <- fit$tau
+taus <- c(1:3/4, probs, 1-probs)
 tsf <- fit$tsf
 symm <- attributes(tsf)$symm
 dbounded <- attributes(tsf)$dbounded
@@ -1122,6 +1129,10 @@ if (isBounded) {
 		x.r), x.r = range(fit$y))
 }
 
+# sort wrt taus
+ii <- match(taus, fit$tau)
+Fitted <- Fitted[,ii]
+
 vecp <- Fitted[ , -c(1:3), drop = FALSE][ , 1:nq, drop = FALSE]
 vecq <- Fitted[ , -c(1:3), drop = FALSE][ , (nq+1):(2*nq), drop = FALSE]
 Me <- drop(Fitted[,2])
@@ -1148,6 +1159,7 @@ if(interval){
 				x.r), x.r = range(fit$y))
 		}
 	}
+	Fitted <- Fitted[ii] # sort wrt to taus
 }
 
 if(interval){
