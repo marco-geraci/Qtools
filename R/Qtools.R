@@ -861,6 +861,35 @@ attr(val, "stderr") <- stderr
 return(val)
 }
 
+quantile.exact <- function(x, probs, level = 0.95){
+
+if(any(probs < 0) | any(probs > 1)) stop("Quantile index out of range: probs must be between 0 and 1")
+if(any(is.na(x))) warning("Missing values will be ommited")
+x <- as.numeric(na.omit(x))
+n <- length(x)
+z <- sort(x)
+C <- gtools::combinations(n = n, r = 2, v = 1:n)
+M <- nrow(C)
+nq <- length(probs)
+out <- array(NA, dim = c(nq, 4), dimnames = list(paste0(probs*100, "%"), c("quantile", "lower", "upper", "conf.level")))
+for(k in 1:nq){
+	xi <- quantile(x, type = 1, probs = probs[k], names = FALSE)
+	gamma <- pbinom(C[,2], size = n, prob = probs[k]) - pbinom(C[,1], size = n, prob = probs[k])
+	gammac <- gamma - level
+	if(all(gammac < 0)) stop(paste0("Quantile p = ", probs[k], ". Maximum confidence level for these data is ",
+	round(max(gamma), 3)))
+	sel <- gammac == min(gammac[gammac >= 0])
+	# if multiple solutions, take the narrowest CI
+	if(sum(sel) > 1){
+		sel <- (1:M)[sel][which.min(z[C[sel,2]] - z[C[sel,1]])]
+	}
+	conf.level <- gamma[sel]
+	CI <- z[C[sel,]]
+	out[k,] <- c(xi, CI, conf.level)
+	}
+return(out)
+}
+
 ######################################################################
 ### Q-based statistics
 ######################################################################
@@ -3267,7 +3296,7 @@ for (i in 1:nq) {
 #zeta <- rq(r.lad ~ s.lad - 1, tau = tau, data = data, method = method)$coefficients
 
 if (nq > 1){
-	coef <- apply(outer(matrix(gamma, nrow = 1), zeta, "*"), 3, function(x, b) x + b, b = beta)
+	coef <- apply(outer(matrix(gamma, nrow = 1), zeta, "*"), 3, function(x, b) x + b, b = beta, simplify = FALSE)
 	taulabs <- paste0("tau = ", format(round(tau, 3)))
 	dimnames(coef) <- list(dimnames(x)[[2]], taulabs)
 } else {
