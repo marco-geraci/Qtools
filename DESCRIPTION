@@ -2,7 +2,7 @@ Package: Qtools
 Type: Package
 Title: Utilities for Quantiles
 Version: 1.5.6
-Date: 2021-09-19
+Date: 2022-05-09
 Authors@R: c(
 	person(given="Marco", family="Geraci", role=c("aut", "cph", "cre"), email="marco.geraci@uniroma1.it", comment = c(ORCID = "0000-0002-6311-8685")),
 	person(given="Alessio", family="Farcomeni", role=c("ctb"), email="alessio.farcomeni@uniroma2.it", comment = c("Contributions to midrq code", ORCID = "0000-0002-7104-5826")),
