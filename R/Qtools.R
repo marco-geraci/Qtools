@@ -3264,6 +3264,7 @@ if (length(weights))
 r.lad <- fit.lad$residuals
 r.abs <- abs(fit.lad$residuals)
 beta <- fit.lad$coefficients
+p <- length(beta)
 
 #fit.lad <- rq(formula, tau = 0.5, data = data, method = method)
 #data$r.lad <- fit.lad$residuals
@@ -3294,13 +3295,13 @@ for (i in 1:nq) {
 #zeta <- rq(r.lad ~ s.lad - 1, tau = tau, data = data, method = method)$coefficients
 
 if (nq > 1){
-	coef <- apply(outer(matrix(gamma, nrow = 1), zeta, "*"), 3, function(x, b) x + b, b = beta, simplify = FALSE)
+	coef <- apply(outer(matrix(gamma, nrow = 1), zeta, "*"), 3, function(x, b) x + b, b = beta, simplify = TRUE)
+	coef <- matrix(coef, nrow = p)
 	taulabs <- paste0("tau = ", format(round(tau, 3)))
 	dimnames(coef) <- list(dimnames(x)[[2]], taulabs)
 } else {
 	coef <- as.numeric(beta + zeta * gamma)
 }
-
 
 fit <- list(coefficients = coef, zeta = zeta, beta = beta, gamma = gamma, tau = tau)
 fit$na.action <- attr(mf, "na.action")
