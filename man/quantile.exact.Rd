@@ -35,7 +35,7 @@ Caution: for large \code{n}, the procedure may reach the limit on the number of 
 
 
 \references{
-Thompson W. R. On confidence ranges for the median and other expectation distributions for populations of unknown distribution form. The Annals of Mathematical Statistics 1936;7(3):122–128.
+Thompson W. R. On confidence ranges for the median and other expectation distributions for populations of unknown distribution form. The Annals of Mathematical Statistics 1936;7(3):122-128.
 }
 
 
