@@ -27,6 +27,11 @@
 \alias{qlssPredRq}
 \alias{qlssPredRqt}
 
+\alias{qprime}
+\alias{predict.llqr}
+\alias{coef.conquer}
+\alias{vcov.conquer}
+
 \alias{rcLoss}
 \alias{l1Loss}
 \alias{nlLoss}

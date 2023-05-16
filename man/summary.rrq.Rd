@@ -24,7 +24,7 @@ numeric value to determine the confidence level \code{(1-alpha)} of the required
 specifies the method used to compute standard errors. Currently, bootstrap is the only method available.
 }
   \item{R}{
-number of boostrap replications.
+number of bootstrap replications.
 }
   \item{sim}{
 see argument \code{sim} in \code{\link{boot}}.
