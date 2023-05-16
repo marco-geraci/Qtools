@@ -5,10 +5,10 @@ citHeader("To cite package", sQuote(meta$Package), "in publications use:")
 year <- sub(".*(2[[:digit:]]{3})-.*", "\\1", meta$Date, perl = TRUE)
 vers <- paste("R package version", meta$Version)
 
-citEntry(
-  entry = "Manual",
+bibentry(
+  bibtype = "Manual",
   title ="Qtools: {U}tilities for quantiles",
-  author = personList(as.person("M. Geraci")),
+  author = person(given = "Marco", family = "Geraci"),
   year = year,
   note = vers,
   url = "https://cran.r-project.org/package=Qtools",
@@ -18,10 +18,9 @@ citEntry(
                      vers, ". Available at https://cran.r-project.org/package=Qtools", ".")
 	)
 
-	
-citEntry(
-	entry = "Article",
- 	author = personList(as.person("Marco Geraci")),
+bibentry(
+	bibtype = "Article",
+ 	author = person(given = "Marco", family = "Geraci"),
 	title = "Qtools: A collection of models and tools for quantile inference",
  	journal = "The R Journal",
 	volume = "8",
