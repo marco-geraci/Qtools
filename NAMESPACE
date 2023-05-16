@@ -13,6 +13,8 @@ import("Matrix")
 import("np")
 import("numDeriv")
 import("quantreg")
+import("conquer")
+import("quantdr")
 
 #exportPattern("^[^\\.]")
 exportPattern("^[[:alpha:]]+")

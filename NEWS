@@ -75,22 +75,29 @@ Version 1.5.3 (November 26, 2020)
 
 Version 1.5.4 (February 7, 2021)
 
-- Removed dependency on Gmisc after CRAN notified unsolved check problems with Gmisc
+- removed dependency on Gmisc after CRAN notified unsolved check problems with Gmisc
 
 =============================================
 
 Version 1.5.5 (July 28, 2021)
 
-- Fixed bug in dqc
-- Fixed bug in midq2q
-- Fixed bug in predict.midrq
+- fixed bug in dqc
+- fixed bug in midq2q
+- fixed bug in predict.midrq
 
 =============================================
 
-Version 1.5.6 (May 9, 2022)
+Version 1.5.6 (May 28, 2022)
 
-- Fixed bug in rrq (thanks to Filippo Palomba for reporting)
-- Fixed bug in qlss.formula (thanks to Ilaria Prosdocimi for reporting)
-- New functions and datasets
+- fixed bug in rrq (thanks to Filippo Palomba for reporting)
+- fixed bug in qlss.formula (thanks to Ilaria Prosdocimi for reporting)
+- new function qexact
+
+=============================================
+
+Version 1.5.7 (May 15, 2023)
+
+- fixed bug in rq.counts
+- new functions for quantile ratio regression
 
 =============================================
