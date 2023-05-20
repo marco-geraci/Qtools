@@ -82,7 +82,7 @@ other arguments for \code{fun}, \code{rq} or \code{tsrq}.
 \details{
 This function computes a number of quantile-based summary statistics for location (median), scale (inter-quartile range and inter-quantile range), and shape (Bowley skewness and shape index) of a distribution. These statistics can be computed for unconditional and conditional distributions.
 
-Let \eqn{Y} be a continuous random variable and let \eqn{Q(p)} be its \emph{p}th quantile. The function \code{qlss} computes the median \eqn{Q(0.5)}, the inter-quartile range \eqn{IQR = Q(0.75) - Q(0.25)}, the inter-quantile range \eqn{IPR(p) = Q(1-p) - Q(p)}, the Bowley skewness index \eqn{A(p) = (Q(1-p) + Q(p) - 2Q(0.5))/IPR(p)}, and the shape index \eqn{T(p) = IPR(p)/IQR(p)}, for \eqn{0 < p < 0.25}.
+Let \eqn{Y} be a continuous random variable and let \eqn{Q(p)} be its \emph{p}th quantile. The function \code{qlss} computes the median \eqn{Q(0.5)}, the inter-quartile range \eqn{IQR = Q(0.75) - Q(0.25)}, the inter-quantile range \eqn{IPR(p) = Q(1-p) - Q(p)}, the Bowley skewness index \eqn{A(p) = (Q(1-p) + Q(p) - 2Q(0.5))/IPR(p)}, and the shape index \eqn{T(p) = IPR(p)/IQR}, for \eqn{0 < p < 0.25}.
 
 The default \code{qlss} function computes the summary statistics of a standard normal distribution or any other theoretical distribution via the argument \code{fun}. The latter must be a function with \code{p} as its probability argument (see for example \code{\link{qnorm}}, \code{\link{qt}}, \code{\link{qchisq}}, \code{\link{qgamma}}, etc.). When a variable \code{x} is provided, LSS measures are computed using empirical (sample) quantiles.
 
