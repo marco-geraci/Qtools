@@ -42,6 +42,9 @@ a vector of predictions.
 Marco Geraci
 }
 
+\seealso{
+\code{\link{qrr}}
+}
 
 \keyword{ predict }
 

@@ -46,7 +46,7 @@ Marco Geraci with contributions from Alessio Farcomeni
 }
 
 \seealso{
-\code{\link{midrq}}
+\code{\link{qrr}}
 }
 
 \keyword{ summary }

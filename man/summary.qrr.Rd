@@ -40,5 +40,10 @@ Farcomeni A. and Geraci M. Quantile ratio regression. 2023. Working Paper.
 Marco Geraci
 }
 
+\seealso{
+\code{\link{qrr}}
+}
+
+
 \keyword{ bootstrap }
 \keyword{ summary }
