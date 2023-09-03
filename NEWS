@@ -95,9 +95,16 @@ Version 1.5.6 (May 28, 2022)
 
 =============================================
 
-Version 1.5.7 (May 15, 2023)
+Version 1.5.7 (September 3, 2023)
 
 - fixed bug in rq.counts
 - new functions for quantile ratio regression
+
+=============================================
+
+Version 1.5.8 (September 4, 2023)
+
+- fixed bugs in qrr
+- reorganized R code
 
 =============================================
