@@ -97,6 +97,11 @@ qrr(y ~ x, data = dd, taus = c(.4,.9))
 
 }
 
+
+\seealso{
+\code{\link{coef.qrr}}, \code{\link{predict.qrr}}, \code{\link{summary.qrr}}, \code{\link{vcov.qrr}}
+}
+
 \keyword{ quantile ratios }
 \keyword{ conditional quantiles }
 
