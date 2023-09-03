@@ -40,7 +40,7 @@ a vector or a matrix of estimated ordinary quantiles. The attribute \code{Fhat} 
 
 
 \references{
-Geraci, M. and A. Farcomeni. Mid-quantile regression for discrete responses. arXiv:1907.01945 [stat.ME]. URL: \url{https://arxiv.org/abs/1907.01945/}.
+Geraci, M. and A. Farcomeni. Mid-quantile regression for discrete responses. arXiv:1907.01945 [stat.ME]. URL: \url{https://arxiv.org/abs/1907.01945}.
 }
 
 \author{

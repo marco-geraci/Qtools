@@ -28,8 +28,6 @@
 \alias{qlssPredRqt}
 
 \alias{qprime}
-\alias{predict_llqr}
-\alias{coef_conquer}
 \alias{vcov_conquer}
 
 \alias{rcLoss}

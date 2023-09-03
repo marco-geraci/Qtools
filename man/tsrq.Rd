@@ -84,7 +84,7 @@ The functions \code{tsrq} and \code{tsrq2} use a two-stage (TS) estimator (Fitze
 \value{
 \code{tsrq}, \code{tsrq2}, \code{rcrq}, \code{nlrq2} return an object of \code{\link{class}} \code{rqt}. This is a list that contains as typical components:
 
-\item{}{the first \code{nt = length(tau)} elements of the list store the results from fitting linear quantile models on the tranformed scale of the response.}
+\item{...}{the first \code{nt = length(tau)} elements of the list store the results from fitting linear quantile models on the tranformed scale of the response.}
 \item{call}{the matched call.}
 \item{method}{the fitting algorithm for \code{rq} or \code{optim}.}
 \item{y}{the response -- untransformed scale.}
