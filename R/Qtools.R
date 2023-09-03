@@ -2735,7 +2735,7 @@ if(conditional){
 		object$B <- B
 	} else if(se %in% c("iid", "nid")) {
 		ans <- list()
-		S <- se.rqt(object, se = se)
+		S <- se_rqt(object, se = se)
 		for(j in 1:nq){
 			val <- c(object[[j]]$coefficients, lambda = object$lambda[j])
 			val <- cbind(val, sqrt(diag(S[,,j])), val - sqrt(diag(S[,,j]))*qnorm(1-alpha/2), val + sqrt(diag(S[,,j]))*qnorm(1-alpha/2))
@@ -3014,7 +3014,7 @@ return(val)
 
 }
 
-se.rqt <- function(object, se = "nid"){
+se_rqt <- function(object, se = "nid"){
 
 
 tau <- object$tau
@@ -4280,8 +4280,8 @@ if(iter == maxIter) warning("Algorithm reached maximum number of iterations")
 
 if(linearize){
 	if(method.rq == "conquer"){
-		omega1 <- vcov.conquer(res = fit1$residual, x = x, tau = p1, h = h1, intercept = intercept)
-		omega2 <- vcov.conquer(res = fit2$residual, x = x, tau = 1 - p2, h = h2, intercept = intercept)
+		omega1 <- vcov_conquer(res = fit1$residual, x = x, tau = p1, h = h1, intercept = intercept)
+		omega2 <- vcov_conquer(res = fit2$residual, x = x, tau = 1 - p2, h = h2, intercept = intercept)
 	} else {
 		omega1 <- summary(fit1, se = "nid", covariance = TRUE)$cov
 		omega2 <- summary(fit2, se = "nid", covariance = TRUE)$cov
@@ -4471,15 +4471,15 @@ cat("\nDegrees of freedom:", nobs, "total;", rdf, "residual\n")
 
 }
 
-predict.llqr <- function(object){
+predict_llqr <- function(object){
 	return(object$ll_est)
 }
 
-coef.conquer <- function(x){
+coef_conquer <- function(x){
 	return(x$coeff)
 }
 
-vcov.conquer <- function(res, x, tau, h, intercept){
+vcov_conquer <- function(res, x, tau, h, intercept){
 	n <- length(res)
 	xn <- if(intercept) x[,c(-1),drop=FALSE] else x
 	Wh <- as.vector(pnorm(-res/h) - tau)^2
