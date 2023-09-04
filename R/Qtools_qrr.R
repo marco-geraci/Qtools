@@ -306,7 +306,7 @@ if (!is.null(cl <- x$cl)) {
 	cat("\n")
 }
 
-bhat <- coef(object)
+bhat <- coef(x)
 cat("\nQuantile ratio regression", paste(x$p1,x$p2,sep=":"), "\n")
 cat("\nCoefficients linear predictor:\n")
 print(bhat, ...)
