@@ -2,7 +2,7 @@
 # Quantile ratio regression
 ##################################################
 
-qrr <- function(formula, data, taus, start = "rq", beta = NULL, tsf = "bc", symm = TRUE, dbounded = FALSE, linearize = TRUE, kernel = "Gaussian", maxIter = 10, epsilon = 1e-5, verbose = FALSE, method.rq = "fn", method.nlrq = "L-BFGS-B"){
+qrr <- function(formula, data, taus, start = "rq", tsf = "bc", symm = TRUE, dbounded = FALSE, linearize = TRUE, kernel = "Gaussian", maxIter = 10, epsilon = 1e-5, verbose = FALSE, method.rq = "fn", method.nlrq = "L-BFGS-B"){
 
 cl <- match.call()
 
@@ -34,8 +34,8 @@ if(length(start) > 1){
 		# start with rq
 		fit2 <- try(rq.fit(x = x, y = y, tau = p2, method = "fn"), silent = TRUE)
 		if(inherits(fit2, "try-error")) stop("rq failed with error: ", fit2, "Change start estimate")
-		bhat <- fit2$coef
-		H2 <- x%*%bhat
+		bhat2 <- fit2$coef
+		H2 <- x%*%bhat2
 		if(any(H2 <= 0)) warning("Some predictions are not strictly positive")
 	}
 
@@ -50,8 +50,8 @@ if(length(start) > 1){
 		# start with conquer (convolution-type smoothing)
 		fit2 <- try(conquer(X = xn, Y = y, tau = p2, kernel = kernel), silent = TRUE)
 		if(inherits(fit2, "try-error")) stop("conquer failed. with error: ", fit2, "Change start estimate")
-		bhat <- fit2$coeff
-		H2 <- x%*%bhat
+		bhat2 <- fit2$coeff
+		H2 <- x%*%bhat2
 		if(any(H2 <= 0)) warning("Some predictions are not strictly positive")
 	}
 
@@ -80,17 +80,6 @@ if(linearize){
 	mf <- data.frame(mf, x)
 }
 
-if(is.null(beta)) {
-	beta <- rep(0, ncol(x))
-	names(beta) <- paste0("b", 1:ncol(x))
-}
-
-if(!is.null(beta)) {
-	stopifnot(length(beta) == ncol(x))
-	names(beta) <- paste0("b", 1:ncol(x))
-}
-
-bhat <- beta
 iter <- 0
 h1 <- h2 <- NULL
 
@@ -104,21 +93,21 @@ if(linearize){
 	z1 <- mf$z <- log(z)
 	if(method.rq == "conquer"){
 		fit1 <- conquer(X = xn, Y = mf$z, tau = p1, kernel = kernel)
-		bhat <- fit1$coeff
+		bhat1 <- fit1$coeff
 		h1 <- fit1$bandwidth
 	} else {
 		fit1 <- rq(ff1, tau = p1, data = mf, method = method.rq)
-		bhat <- coef(fit1)
+		bhat1 <- coef(fit1)
 	}
-	zhat <- if(method.rq %in% c("pfn", "conquer")) x%*%bhat else predict(fit1)
+	zhat <- if(method.rq %in% c("pfn", "conquer")) x%*%bhat1 else predict(fit1)
 	H1 <- (1 + exp(zhat))*H2
 } else {
 	mf$z <- y/H2
-	fit1 <- nlrq(ff1, tau = p1, data = mf, start = as.list(bhat), method = method.nlrq)
-	bhat <- coef(fit1)
+	fit1 <- nlrq(ff1, tau = p1, data = mf, start = as.list(bhat1), method = method.nlrq)
+	bhat1 <- coef(fit1)
 	H1 <- predict(fit1)*H2
 }
-if(verbose) cat("gamma1", coef(fit1), "\n")
+if(verbose) cat("gamma1", bhat1, "\n")
 
 if(linearize){
 	z <- H1/y - 1
@@ -126,24 +115,24 @@ if(linearize){
 	z2 <- mf$z <- log(z)
 	if(method.rq == "conquer"){
 		fit2 <- conquer(X = xn, Y = mf$z, tau = 1 - p2, kernel = kernel)
-		bhat <- fit2$coeff
+		bhat2 <- fit2$coeff
 		h2 <- fit2$bandwidth
 	} else {
 		fit2 <- rq(ff2, tau = 1 - p2, data = mf, method = method.rq)
-		bhat <- coef(fit2)
+		bhat2 <- coef(fit2)
 	}
-	zhat <- if(method.rq %in% c("pfn", "conquer")) x%*%bhat else predict(fit2)
+	zhat <- if(method.rq %in% c("pfn", "conquer")) x%*%bhat2 else predict(fit2)
 	H2 <- H1/(1 + exp(zhat))
 } else {
 	mf$z <- y/H1
-	fit2 <- nlrq(ff2, tau = p2, data = mf, start = as.list(bhat), method = method.nlrq)
-	bhat <- coef(fit2)
+	fit2 <- nlrq(ff2, tau = p2, data = mf, start = as.list(bhat2), method = method.nlrq)
+	bhat2 <- coef(fit2)
 	H2 <- predict(fit2)*H1
 }
 
-if(verbose) cat("gamma2", coef(fit2), "\n")
+if(verbose) cat("gamma2", bhat2, "\n")
 
-if(max(abs(coef(fit1) - coef(fit2))) < epsilon) {
+if(max(abs(bhat1 - bhat2)) < epsilon) {
 		cat("Algorithm converged", "\n")
 		break
 	}
@@ -165,8 +154,8 @@ if(linearize){
 	omega2 <- summary(fit2)$cov
 }
 
-names(bhat) <- colnames(x)
-ans <- list(call = cl, formula = formula, coef = bhat, p1 = p1, p2 = p2, omega1 = omega1, omega2 = omega2, ff1 = ff1, ff2 = ff2, data = mf.old, x = x, y = y, H1 = as.numeric(H1), H2 = as.numeric(H2), method.rq = method.rq, intercept = intercept, taus = taus, start = start, beta = beta, tsf = tsf, symm = symm, dbounded = dbounded, linearize = linearize, kernel = kernel, maxIter = maxIter, epsilon = epsilon, verbose = verbose, method.rq = method.rq, method.nlrq = method.nlrq)
+names(bhat2) <- colnames(x)
+ans <- list(call = cl, formula = formula, coef = bhat2, p1 = p1, p2 = p2, omega1 = omega1, omega2 = omega2, ff1 = ff1, ff2 = ff2, data = mf.old, x = x, y = y, H1 = as.numeric(H1), H2 = as.numeric(H2), method.rq = method.rq, intercept = intercept, taus = taus, start = start, tsf = tsf, symm = symm, dbounded = dbounded, linearize = linearize, kernel = kernel, maxIter = maxIter, epsilon = epsilon, verbose = verbose, method.rq = method.rq, method.nlrq = method.nlrq)
 attr(ans, "linearize") <- linearize
 class(ans) <- "qrr"
 return(ans)
@@ -182,7 +171,7 @@ predict.qrr <- function(object, newdata, na.action = na.pass, type = "response",
 
 tau <- object$tau
 nq <- length(tau)
-betahat <- object$coef
+bhat <- coef(object)
 
 if(missing(newdata)) {x <- object$x} else {
 	objt <- terms(object)
@@ -194,7 +183,7 @@ if(missing(newdata)) {x <- object$x} else {
 	x <- model.matrix(Terms, m, contrasts.arg = object$contrasts)
 }
 
-linpred <- x %*% betahat
+linpred <- x %*% bhat
 
 if(type == "link"){
 	return(linpred)
@@ -300,7 +289,7 @@ n <- length(object$y)
 bhat <- coef(object)
 p <- length(bhat)
 
-object$tTable <- data.frame(bhat, se, coef(object)/se, 2*(1 - pt(abs(coef(object)/se), df = n - p)))
+object$tTable <- data.frame(bhat, se, bhat/se, 2*(1 - pt(abs(bhat/se), df = n - p)))
 names(object$tTable) <- c("Estimate", "Std.Err", "t value", "Pr(>|t|)")
 
 class(object) <- "summary.qrr"
@@ -317,10 +306,10 @@ if (!is.null(cl <- x$cl)) {
 	cat("\n")
 }
 
-coef <- x$coef
+bhat <- coef(object)
 cat("\nQuantile ratio regression", paste(x$p1,x$p2,sep=":"), "\n")
 cat("\nCoefficients linear predictor:\n")
-print(coef, ...)
+print(bhat, ...)
 nobs <- length(x$y)
 p <- ncol(x$x)
 rdf <- nobs - p
