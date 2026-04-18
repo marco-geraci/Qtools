@@ -1,9 +1,9 @@
 \name{esterase}
 \alias{esterase}
-\title{Esterase Essay Data}
+\title{Esterase Assay Data}
 \description{
   The \code{esterase} data frame has 113 rows and 2 columns with the
-  results of an essay for the concentration of an enzyme esterase.
+  results of an assay for the concentration of an enzyme esterase.
 }
 \format{
   This data frame contains the following columns:
@@ -19,7 +19,7 @@
 }
 
 \details{
-The esterase essay data were reported by Caroll and Ruppert (1988) and successively analyzed by Zhao (2000).
+The esterase assay data were reported by Caroll and Ruppert (1988) and successively analyzed by Zhao (2000).
 }
 
 \references{
