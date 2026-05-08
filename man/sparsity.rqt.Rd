@@ -83,6 +83,6 @@ sparsity(fit.rq, se = "ker")
 }
 
 \seealso{
-\code{\link{rq}}
+\code{\link[quantreg]{rq}}
 }
 

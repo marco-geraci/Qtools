@@ -38,7 +38,7 @@ an optional list. See the \code{contrasts.arg} of \code{\link{model.matrix.defau
 an optional offset to be included in the model frame.  
 }
   \item{method}{
-estimation method for the fitting process. See \code{\link{rq}}.
+estimation method for the fitting process. See \code{\link[quantreg]{rq}}.
 }
 
   \item{M}{

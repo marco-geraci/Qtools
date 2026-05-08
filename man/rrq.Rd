@@ -43,7 +43,7 @@ an optional vector of weights to be used in the fitting process. Should be NULL 
 a function which indicates what should happen when the data contain \code{NA}s.
 }
   \item{method}{
-the algorithm used to compute the fit (see \code{\link{rq}}).
+the algorithm used to compute the fit (see \code{\link[quantreg]{rq}}).
 }
   \item{model}{
 if \code{TRUE} then the model frame is returned. This is essential if one wants to call summary subsequently.

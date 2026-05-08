@@ -9,8 +9,8 @@ This function fits a quantile ratio regression model
 }
 
 \usage{
-qrr(formula, data, taus, start = "rq", tsf = "bc",
-symm = TRUE, dbounded = FALSE, linearize = TRUE, 
+qrr(formula, data, taus, start = "rq", beta = NULL,
+tsf = "bc", symm = TRUE, dbounded = FALSE, linearize = TRUE, 
 kernel = "Gaussian", maxIter = 10, epsilon = 1e-05,
 verbose = FALSE, method.rq = "fn", method.nlrq = "L-BFGS-B")
 }
@@ -27,6 +27,9 @@ a vector of two quantiles for the ratio to be estimated (the order is irrelevant
 }
   \item{start}{
 the algorithm with which obtain the starting values for one of the quantiles in the ratio. Possible options are \code{"rq"} (linear regression model -- see \code{\link[quantreg]{rq}}), \code{"tsrq"} (quantile regression transformation model -- see \code{\link{tsrq}}), \code{"conquer"} (fast linear regression model -- see \code{\link[conquer]{conquer}}), \code{"llqr"} (nonparametric linear regression model -- see \code{\link[quantdr]{llqr}})
+}
+  \item{beta}{
+starting values for the regression coefficients. If left \code{NULL}, these are set to 0.
 }
   \item{tsf}{
 if \code{start = "tsrq"}, see \code{\link{tsrq}}.

@@ -21,27 +21,27 @@ an object of \code{\link{class}} \code{rqt}.
 numeric value to determine the confidence level \code{(1-alpha)} of the required interval.
 }
   \item{se}{
-specifies the method used to compute standard errors. For conditional inference (\code{conditional = TRUE}), see argument \code{se} in \code{\link{summary.rq}}. For unconditional inference (\code{conditional = FALSE}), see details below.
+specifies the method used to compute standard errors. For conditional inference (\code{conditional = TRUE}), see argument \code{se} in \code{\link[quantreg]{summary.rq}}. For unconditional inference (\code{conditional = FALSE}), see details below.
 }
   \item{R}{
 number of bootstrap replications.
 }
   \item{sim}{
-see argument \code{sim} in \code{\link{boot}}.
+see argument \code{sim} in \code{\link[boot]{boot}}.
 }
   \item{stype}{
-see argument \code{stype} in \code{\link{boot}}.
+see argument \code{stype} in \code{\link[boot]{boot}}.
 }
   \item{conditional}{
 logical flag. If \code{TRUE}, the transformation parameter is assumed to be known and conditional inference is carried out.
 }
   \item{\dots}{
-if \code{conditional = TRUE}, additional arguments for \code{\link{summary.rq}} in package \code{quantreg}. If \code{conditional = FALSE}, additional arguments for \code{\link{boot}} in package \code{boot}.
+if \code{conditional = TRUE}, additional arguments for \code{\link[quantreg]{summary.rq}} in package \code{quantreg}. If \code{conditional = FALSE}, additional arguments for \code{\link[boot]{boot}} in package \code{boot}.
 }
 }
 
 \details{
-If inference is carried out conditionally on the transformation parameter (ie, assuming this is \emph{known} rather than estimated), any type of summary for regression quantiles can be used (see \code{\link{summary.rq}}).
+If inference is carried out conditionally on the transformation parameter (ie, assuming this is \emph{known} rather than estimated), any type of summary for regression quantiles can be used (see \code{\link[quantreg]{summary.rq}}).
 
 For unconditional inference (\code{conditional = FALSE}), there are three methods available: \code{boot} for bootstrap; \code{iid} for large-\emph{n} approximation of the standard errors under IID assumptions; \code{nid} for large-\emph{n} approximation of the standard errors under NID assumptions. See Powell (1991), Chamberlain (1994) and Geraci and Jones (2015).
 }

@@ -21,7 +21,7 @@ trimming value. One of \code{c(0.05,0.10,0.15,0.20,0.25,0.30)}.
 }
 
 \details{
-This function is applied to an object produced by \code{\link{KhmaladzeTest}}. The Khmaladze test is used to test for location--shift and location-scale--shift hypotheses (Koenker, 2005). The test statistic is computed over the interval \emph{[epsilon, 1 - epsilon]}, where \emph{epsilon} is the trimming value.
+This function is applied to an object produced by \code{\link[quantreg]{KhmaladzeTest}}. The Khmaladze test is used to test for location--shift and location-scale--shift hypotheses (Koenker, 2005). The test statistic is computed over the interval \emph{[epsilon, 1 - epsilon]}, where \emph{epsilon} is the trimming value.
 }
 
 

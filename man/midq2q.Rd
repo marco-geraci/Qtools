@@ -1,29 +1,37 @@
-\name{midq2q}
+\name{midq2q.midrq}
+\alias{midq2q.midrq}
+\alias{midq2q.midquantile}
 \alias{midq2q}
 
 \title{
-Recover Ordinary Conditional Quantiles from Conditional Mid-Quantiles}
+Recover Ordinary Quantiles from Mid-Quantiles}
 
 \description{
-This function recovers ordinary conditional quantile functions based on fitted mid-quantile regression models.
+This function recovers ordinary quantiles from fitted mid-quantile objects.
 }
 
 \usage{
-midq2q(object, newdata, observed = FALSE, ...)
+\method{midq2q}{midquantile}(object, observed = FALSE, ...)
+\method{midq2q}{midrq}(object, observed = FALSE, ..., newdata, offset, na.action = na.pass)
 }
 
 \arguments{
   \item{object}{
-	an object of \code{\link{class}} \code{midrq}.
-	}
-
-  \item{newdata}{
-	a required data frame in which to look for variables with which to predict.
+	an object of \code{\link{class}} \code{midquantile} or \code{midrq}.
 	}
   \item{observed}{
 	logical flag. If \code{TRUE}, ordinary quantiles are recovered from observed sample values. Otherwise, they are calcuated as rounded mid-quantiles. See details.
 	}
 
+  \item{newdata}{
+	optionally, a data frame in which to look for variables with which to predict. If omitted, the fitted values are used.
+	}
+  \item{offset}{
+	an optional offset to be included in the model frame (when \code{newdata} is provided).
+	}
+  \item{na.action}{
+	function determining what should be done with missing values in \code{newdata}. The default is to predict \code{NA}.
+	}
 
  \item{\dots}{
 not used.
@@ -54,7 +62,16 @@ Marco Geraci
 # Esterase data
 data(esterase)
 
-# Fit quantiles 0.1, 0.15, ..., 0.85
+# Fit conditional mid-quantiles 0.1, 0.15, ..., 0.85
+fit <- midquantile(esterase$Count, probs = 2:17/20)
+
+# Recover ordinary quantile function
+print(Qhat <- midq2q(fit))
+
+# Plot
+plot(Qhat)
+
+# Fit conditional mid-quantiles 0.1, 0.15, ..., 0.85
 fit <- midrq(Count ~ Esterase, tau = 2:17/20, data = esterase, type = 3, lambda = 0)
 
 # Recover ordinary quantile function

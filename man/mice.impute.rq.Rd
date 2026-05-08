@@ -54,7 +54,7 @@ logical flag. If \code{TRUE} (default), the transformation parameter is assumed 
 constant used to trim the values of the sample space.
 }
   \item{method.rq}{
-linear programming algorithm (see \code{\link{rq}}).
+linear programming algorithm (see \code{\link[quantreg]{rq}}).
 }
   \item{\dots}{
 additional arguments.

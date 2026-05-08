@@ -51,7 +51,7 @@ an optional list. See the \code{contrasts.arg} of \code{\link{model.matrix.defau
 }
 
   \item{method}{
-the algorithm used to solve the linear program. See \code{\link{rq}} for further details. The Frisch-Newton interior point method is the default.
+the algorithm used to solve the linear program. See \code{\link[quantreg]{rq}} for further details. The Frisch-Newton interior point method is the default.
 }
 
   \item{type}{

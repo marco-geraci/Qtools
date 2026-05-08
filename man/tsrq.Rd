@@ -56,7 +56,7 @@ vector of length \code{1 + p} (nlrq1) or \code{2 + p} (nlrq2) of initial values 
 list of control parameters of the fitting process (nlrq1). See \code{\link{nlControl}}.
 }
   \item{tau}{
-the quantile(s) to be estimated. See \code{\link{rq}}.
+the quantile(s) to be estimated. See \code{\link[quantreg]{rq}}.
 }
   \item{subset}{
 an optional vector specifying a subset of observations to be used in the fitting process.
@@ -71,7 +71,7 @@ a function which indicates what should happen when the data contain \code{NA}s.
 an optional list. See the \code{contrasts.arg} of \code{\link{model.matrix.default}}.
 }
   \item{method}{
-fitting algorithm for \code{\link{rq}} (default is Frisch-Newton interior point method "\code{fn}").
+fitting algorithm for \code{\link[quantreg]{rq}} (default is Frisch-Newton interior point method "\code{fn}").
 }
 }
 

@@ -27,13 +27,13 @@ specifies the method used to compute standard errors. Currently, bootstrap is th
 number of bootstrap replications.
 }
   \item{sim}{
-see argument \code{sim} in \code{\link{boot}}.
+see argument \code{sim} in \code{\link[boot]{boot}}.
 }
   \item{stype}{
-see argument \code{stype} in \code{\link{boot}}.
+see argument \code{stype} in \code{\link[boot]{boot}}.
 }
   \item{\dots}{
-additional arguments for \code{\link{boot}} in package \code{boot}.
+additional arguments for \code{\link[boot]{boot}} in package \code{boot}.
 }
 }
 
