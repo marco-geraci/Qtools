@@ -2,7 +2,7 @@
 # Quantile ratio regression
 ##################################################
 
-qrr <- function(formula, data, taus, start = "rq", tsf = "bc", symm = TRUE, dbounded = FALSE, linearize = TRUE, kernel = "Gaussian", maxIter = 10, epsilon = 1e-5, verbose = FALSE, method.rq = "fn", method.nlrq = "L-BFGS-B"){
+qrr <- function(formula, data, taus, start = "rq", beta = NULL, tsf = "bc", symm = TRUE, dbounded = FALSE, linearize = TRUE, kernel = "Gaussian", maxIter = 10, epsilon = 1e-5, verbose = FALSE, method.rq = "fn", method.nlrq = "L-BFGS-B"){
 
 cl <- match.call()
 
@@ -80,6 +80,18 @@ if(linearize){
 	mf <- data.frame(mf, x)
 }
 
+if(is.null(beta)) {
+	beta <- rep(0, ncol(x))
+	names(beta) <- paste0("b", 1:ncol(x))
+}
+
+if(!is.null(beta)) {
+	stopifnot(length(beta) == ncol(x))
+	names(beta) <- paste0("b", 1:ncol(x))
+}
+
+bhat2 <- beta
+
 iter <- 0
 h1 <- h2 <- NULL
 
@@ -103,7 +115,7 @@ if(linearize){
 	H1 <- (1 + exp(zhat))*H2
 } else {
 	mf$z <- y/H2
-	fit1 <- nlrq(ff1, tau = p1, data = mf, start = as.list(bhat1), method = method.nlrq)
+	fit1 <- nlrq(ff1, tau = p1, data = mf, start = as.list(bhat2), method = method.nlrq)
 	bhat1 <- coef(fit1)
 	H1 <- predict(fit1)*H2
 }
@@ -125,18 +137,19 @@ if(linearize){
 	H2 <- H1/(1 + exp(zhat))
 } else {
 	mf$z <- y/H1
-	fit2 <- nlrq(ff2, tau = p2, data = mf, start = as.list(bhat2), method = method.nlrq)
+	fit2 <- nlrq(ff2, tau = p2, data = mf, start = as.list(bhat1), method = method.nlrq)
 	bhat2 <- coef(fit2)
 	H2 <- predict(fit2)*H1
 }
 
 if(verbose) cat("gamma2", bhat2, "\n")
 
+iter <- iter + 1
+
 if(max(abs(bhat1 - bhat2)) < epsilon) {
-		cat("Algorithm converged", "\n")
+		if(verbose) cat("Algorithm converged", "\n")
 		break
 	}
-iter <- iter + 1
 }
 
 if(iter == maxIter) warning("Algorithm reached maximum number of iterations")
@@ -155,7 +168,7 @@ if(linearize){
 }
 
 names(bhat2) <- colnames(x)
-ans <- list(call = cl, formula = formula, coef = bhat2, p1 = p1, p2 = p2, omega1 = omega1, omega2 = omega2, ff1 = ff1, ff2 = ff2, data = mf.old, x = x, y = y, H1 = as.numeric(H1), H2 = as.numeric(H2), method.rq = method.rq, intercept = intercept, taus = taus, start = start, tsf = tsf, symm = symm, dbounded = dbounded, linearize = linearize, kernel = kernel, maxIter = maxIter, epsilon = epsilon, verbose = verbose, method.rq = method.rq, method.nlrq = method.nlrq)
+ans <- list(call = cl, formula = formula, coef = bhat2, p1 = p1, p2 = p2, omega1 = omega1, omega2 = omega2, ff1 = ff1, ff2 = ff2, data = mf.old, x = x, y = y, H1 = as.numeric(H1), H2 = as.numeric(H2), method.rq = method.rq, intercept = intercept, taus = taus, start = start, tsf = tsf, symm = symm, dbounded = dbounded, linearize = linearize, kernel = kernel, nit = iter, maxIter = maxIter, epsilon = epsilon, verbose = verbose, method.rq = method.rq, method.nlrq = method.nlrq)
 attr(ans, "linearize") <- linearize
 class(ans) <- "qrr"
 return(ans)
@@ -343,4 +356,211 @@ vcov_conquer <- function(res, x, tau, h, intercept){
 	Dhinv <- solve(Dh)
 	V <- Dhinv %*% Stau %*% Dhinv/n
 	return(V)
+}
+
+##################################################
+# Ratios of quantiles and tail means
+##################################################
+
+qr_var <- function(object, newdata, se = c("iid", "nid")) {
+
+  se <- match.arg(se)
+
+  p <- object$tau
+  if (length(p) != 2) stop("Only two quantiles are allowed")
+  if (diff(p) <= 0) stop("'tau' must be ordered")
+  if (missing(newdata)) return(NULL)
+
+  # prediction design matrix
+  tt <- terms(object)
+  Terms <- delete.response(tt)
+  m <- model.frame(Terms, newdata, xlev = object$xlevels)
+  if (!is.null(cl <- attr(Terms, "dataClasses")))
+    .checkMFClasses(cl, m)
+  X <- model.matrix(Terms, m, contrasts.arg = object$contrasts)
+
+  # estimation design matrix
+  Xfit <- model.matrix(object$formula, object$model)
+  n <- nrow(Xfit)
+  xx <- crossprod(Xfit)
+  Jinv <- solve(xx / n)
+
+  # predicted quantiles
+  Qhat <- X %*% object$coefficients
+
+  # summaries
+  fits <- summary(object, se = se, covariance = TRUE)
+  V1 <- fits[[1]]$cov
+  V2 <- fits[[2]]$cov
+
+  # cross-covariance block
+  if (se == "iid") {
+    f1 <- fits[[1]]$scale
+    f2 <- fits[[2]]$scale
+    V12 <- (p[1] - p[1] * p[2]) / (n * f1 * f2) * Jinv
+  }
+
+  if (se == "nid") {
+    H1inv <- fits[[1]]$Hinv
+    H2inv <- fits[[2]]$Hinv
+    V12 <- (p[1] - p[1] * p[2]) * H1inv %*% xx %*% H2inv
+  }
+
+  out <- numeric(nrow(X))
+
+  for (k in seq_len(nrow(X))) {
+    x <- X[k, , drop = FALSE]
+    q1 <- Qhat[k, 1]
+    q2 <- Qhat[k, 2]
+
+    v1  <- drop(x %*% V1  %*% t(x))
+    v2  <- drop(x %*% V2  %*% t(x))
+    v12 <- drop(x %*% V12 %*% t(x))
+
+    out[k] <- (-q2 / q1^2)^2 * v1 +
+      (1 / q1)^2 * v2 +
+      2 * (-q2 / q1^2) * (1 / q1) * v12
+  }
+
+  out
+}
+
+qtr_var <- function(fitL, fitU, newdata, se = c("iid", "nid"),
+                    wL = NULL, wU = NULL) {
+
+  se <- match.arg(se)
+
+  pL <- fitL$tau
+  pU <- fitU$tau
+
+  if (missing(newdata)) return(NULL)
+
+  if (any(diff(pL) <= 0)) stop("'fitL$tau' must be ordered")
+  if (any(diff(pU) <= 0)) stop("'fitU$tau' must be ordered")
+
+  # prediction design matrix
+  ttL <- terms(fitL)
+  TermsL <- delete.response(ttL)
+  mL <- model.frame(TermsL, newdata, xlev = fitL$xlevels)
+  if (!is.null(cl <- attr(TermsL, "dataClasses")))
+    .checkMFClasses(cl, mL)
+  X <- model.matrix(TermsL, mL, contrasts.arg = fitL$contrasts)
+
+  ttU <- terms(fitU)
+  TermsU <- delete.response(ttU)
+  mU <- model.frame(TermsU, newdata, xlev = fitU$xlevels)
+  if (!is.null(cl <- attr(TermsU, "dataClasses")))
+    .checkMFClasses(cl, mU)
+  XU <- model.matrix(TermsU, mU, contrasts.arg = fitU$contrasts)
+
+  if (!isTRUE(all.equal(X, XU)))
+    stop("fitL and fitU do not imply the same design matrix for 'newdata'")
+
+  # estimation design matrix
+  XfitL <- model.matrix(fitL$formula, fitL$model)
+  XfitU <- model.matrix(fitU$formula, fitU$model)
+
+  if (!isTRUE(all.equal(XfitL, XfitU)))
+    stop("fitL and fitU must be fitted on the same design matrix")
+
+  Xfit <- XfitL
+  n <- nrow(Xfit)
+  xx <- crossprod(Xfit)
+  Jinv <- solve(xx / n)
+
+  # default weights: equal weights
+  if (is.null(wL)) wL <- rep(1 / length(pL), length(pL))
+  if (is.null(wU)) wU <- rep(1 / length(pU), length(pU))
+
+  if (length(wL) != length(pL)) stop("'wL' has wrong length")
+  if (length(wU) != length(pU)) stop("'wU' has wrong length")
+
+  wL <- wL / sum(wL)
+  wU <- wU / sum(wU)
+
+  # predicted quantiles
+  QhatL <- X %*% fitL$coefficients
+  QhatU <- X %*% fitU$coefficients
+
+  Lhat <- drop(QhatL %*% wL)
+  Uhat <- drop(QhatU %*% wU)
+
+  fitsL <- summary(fitL, se = se, covariance = TRUE)
+  fitsU <- summary(fitU, se = se, covariance = TRUE)
+
+  coef_cov <- function(i, j, side = c("LL", "UU", "LU")) {
+
+    side <- match.arg(side)
+
+    if (side == "LL") {
+      taui <- pL[i]
+      tauj <- pL[j]
+      fi <- fitsL[[i]]
+      fj <- fitsL[[j]]
+    } else if (side == "UU") {
+      taui <- pU[i]
+      tauj <- pU[j]
+      fi <- fitsU[[i]]
+      fj <- fitsU[[j]]
+    } else {
+      taui <- pL[i]
+      tauj <- pU[j]
+      fi <- fitsL[[i]]
+      fj <- fitsU[[j]]
+    }
+
+    if (side != "LU" && i == j) return(fi$cov)
+
+    cfac <- min(taui, tauj) - taui * tauj
+
+    if (se == "iid") {
+      out <- cfac / (n * fi$scale * fj$scale) * Jinv
+    } else {
+      out <- cfac * fi$Hinv %*% xx %*% fj$Hinv
+    }
+
+    out
+  }
+
+  out <- numeric(nrow(X))
+
+  for (k in seq_len(nrow(X))) {
+
+    x <- X[k, , drop = FALSE]
+
+    SLL <- matrix(0, length(pL), length(pL))
+    SUU <- matrix(0, length(pU), length(pU))
+    SLU <- matrix(0, length(pL), length(pU))
+
+    for (i in seq_along(pL)) {
+      for (j in seq_along(pL)) {
+        SLL[i, j] <- drop(x %*% coef_cov(i, j, "LL") %*% t(x))
+      }
+    }
+
+    for (i in seq_along(pU)) {
+      for (j in seq_along(pU)) {
+        SUU[i, j] <- drop(x %*% coef_cov(i, j, "UU") %*% t(x))
+      }
+    }
+
+    for (i in seq_along(pL)) {
+      for (j in seq_along(pU)) {
+        SLU[i, j] <- drop(x %*% coef_cov(i, j, "LU") %*% t(x))
+      }
+    }
+
+    vL  <- drop(t(wL) %*% SLL %*% wL)
+    vU  <- drop(t(wU) %*% SUU %*% wU)
+    vLU <- drop(t(wL) %*% SLU %*% wU)
+
+    lhat <- Lhat[k]
+    uhat <- Uhat[k]
+
+    out[k] <- (-uhat / lhat^2)^2 * vL +
+      (1 / lhat)^2 * vU +
+      2 * (-uhat / lhat^2) * (1 / lhat) * vLU
+  }
+
+  out
 }

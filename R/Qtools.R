@@ -29,6 +29,9 @@ maref <- function(object, namevec) UseMethod("maref")
 
 sparsity <- function(object, se = "nid", hs = TRUE) UseMethod("sparsity")
 
+# Mid-quantiles to quantiles
+midq2q <-  function(object, observed = FALSE, ...) UseMethod("midq2q")
+
 ######################################################################
 ### Confidence intervals for unconditional quantiles
 ######################################################################
@@ -59,6 +62,109 @@ for(k in 1:nq){
 	}
 return(out)
 }
+
+##################################################
+### splines
+##################################################
+
+qsmspline <- function(x, y, p, lambda = 1, maxIter = 300, eps = 1e-2, gamma = 10, aggressive = FALSE){
+
+	fdir <- function(x, Q){
+		n <- length(x[[1]])
+		ABh <- sqrt(c(x[[1]], x[[2]])*c(x[[3]], x[[4]]))
+		zero <- matrix(0, n, n)
+		I <- diag(n)
+		A1B1 <- diag(x[[1]]/x[[3]])
+		A2B2 <- diag(x[[2]]/x[[4]])
+
+		M1 <- cbind(I, zero, A1B1, zero, zero)
+		M2 <- cbind(zero, I, zero, A2B2, zero)
+		M3 <- cbind(zero, zero, I, I, zero)
+		M4 <- cbind(I, -I, zero, zero, -I)
+		M5 <- cbind(zero, zero, I, zero, -Q)
+		M <- rbind(M1, M2, M3, M4, M5)
+
+		mu <- sum(c(x[[1]],x[[2]])*c(x[[3]],x[[4]]))/(2*n + sqrt(2*n))
+		k <- as.matrix(1/ABh - ABh/mu)
+		k <- sqrt(sum(k^2))
+		y <- c((mu/x[[3]] - x[[1]])/(mu*k), (mu/x[[4]] - x[[2]])/(mu*k), rep(0, 3*n))
+
+		solve(M, y)
+	}
+
+	init <- function(y, p, gamma){
+		n <- length(y)
+		e <- rep(1, n)
+		k <- max(pmax(abs(p*y), abs((p-1)*y)))
+		a1 <- gamma*k*e - p*y
+		a2 <- gamma*k*e - (p-1)*y
+		b1 <- (1-p)*e
+		b2 <- p*e
+		u <- rep(0, n)
+		ans <- list(a1, a2, b1, b2, u)
+		return(ans)
+	}
+		
+	theta <- function(x, aggressive){
+
+		if(aggressive){
+			NULL
+		} else {
+			a <- c(x[[1]], x[[2]])
+			b <- c(x[[3]], x[[4]])
+			ans <- 0.4*min(sqrt(a*b))
+		}
+		return(ans)
+	}
+
+n <- length(y)
+
+dx <- diff(x)
+a0 <- 1/dx[-c(n-1)]
+a1 <- -(1/dx[-c(1)] + 1/dx[-c(n-1)])
+a2 <- 1/dx[-c(1)]
+
+a <- cbind(a0,a1,a2)
+U <- matrix(0, n-2, n)
+for(i in 1:(n-2)) U[i,i:(i+2)] <- a[i,]
+U <- t(U)
+xmin <- outer(x, x, pmin)
+xmax <- outer(x, x, pmax)
+a <- min(x)  - 1
+W <- 1/2*(xmax - xmin)*(xmin - a)^2 + 1/3*(xmin - a)^3
+Q <- 2*lambda*U%*%solve(t(U)%*%W%*%U)%*%t(U)
+
+x0 <- init(y, p, gamma = gamma)
+delta <- fdir(x0, Q)
+th <- theta(x0, aggressive = aggressive)
+
+iter <- 0
+
+while(iter < maxIter){
+
+x1 <- as.vector(unlist(x0) + th*delta)
+err <- max(abs(x1 - unlist(x0)))
+	if(err < eps){
+		ans <- split(x1, rep(1:5, each = n))
+		break("Convergence reached")
+	} else {
+		x0 <- split(x1, rep(1:5, each = n))
+		th <- theta(x0, aggressive = FALSE)
+		delta <- fdir(x0, Q)
+		iter <- iter + 1
+		ans <- NULL
+	}
+
+}
+
+if(iter == maxIter) warning("Reached maximum number of iterations")
+
+names(ans) <- c("a1", "a2", "b1", "b2", "fit")
+
+return(ans)
+
+}
+
 
 ##################################################
 ### Khmaladze and other tests
@@ -161,7 +267,7 @@ return(val)
 
 }
 
-GOFTest <- function(object, type = "cusum", alpha = 0.05, B = 100, seed = NULL){
+LOFTest <- GOFTest <- function(object, type = "cusum", alpha = 0.05, B = 100, seed = NULL){
 
 
 val <- list()
@@ -170,17 +276,17 @@ val[[1]] <- switch(type,
 	cusum = rcTest(object = object, alpha = alpha, B = B, seed = seed))
 
 attr(val, "type") <- type
-class(val) <- "GOFTest"
+class(val) <- c("LOFTest", "GOFTest")
 return(val)
 
 }
 
-print.GOFTest <- function (x, digits = max(3, getOption("digits") - 3), ...){
+print.LOFTest <- print.GOFTest <- function (x, digits = max(3, getOption("digits") - 3), ...){
 
 nt <- length(x)
 type <- attributes(x)$type
 txt <- vector()
-txt[1] <- "Goodness-of-fit test for quantile regression based on the cusum process"
+txt[1] <- "Lack-of-fit test for quantile regression based on the cusum process"
 tau <- x[[1]]$tau
 nq <- length(tau)
 

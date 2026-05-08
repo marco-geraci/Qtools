@@ -496,6 +496,7 @@ tau <- object$tau
 nq <- length(tau)
 x <- object$x
 n <- length(object$y)
+if(n > 500 & !numerical) warning("Try 'numerical = TRUE'. Numerical Hessian can be faster with this sample size (", n, ")")
 p <- ncol(x)
 G <- object$midFit$G
 Gvec <- as.vector(G)
@@ -517,6 +518,7 @@ if(numerical){
 		H <- hessian(func = f, x = object$coefficients[,j], method = "Richardson", args = FIT_ARGS)
 		ans <- MASS::ginv(H)
 		V[[j]] <- ans/n
+		V[[j]] <- corpcor::make.positive.definite(V[[j]])
 	}
 } else {
 	xb <- as.matrix(predict(object, type = "link")) # xb includes the offset
@@ -542,6 +544,8 @@ if(numerical){
 		V2 <- J2 %*% Diagonal(x = J1[nonZero]) %*% t(J2)
 
 		V[[j]] <- as.matrix(V1 + rate*V2)
+		V[[j]] <- corpcor::make.positive.definite(V[[j]])
+
 	}
 }
 
@@ -586,16 +590,79 @@ return(object)
 
 }
 
-midq2q <- function(object, newdata, observed = FALSE, ...){
+midq2q.midquantile <- function(object, observed = FALSE, ...){
 
+eps <- .Machine$double.eps^0.5
+
+probs <- object$x
+
+midFit <- midecdf(object$data)
+yo <- midFit$x
+Fhat <- ecdf(object$data)(yo)
+Ghat <- midFit$y
+
+Hhat <- object$y
+sel <- findInterval(Hhat, yo, all.inside = TRUE)
+low <- yo[sel] 
+up <- yo[sel + 1]
+
+if(observed){
+	csi <- ifelse(probs > Fhat[sel], up, low)
+	tmp <- Fhat[sel]
+} else {
+	gamma <- (Hhat - low)/(up - low)
+	gamma <- pmax(gamma, 0)
+	gamma <- pmin(gamma, 1)
+	pstar <- as.numeric((1-gamma)*Ghat[sel] + gamma*Ghat[sel + 1])
+	sel <- findInterval(pstar, Ghat)
+	csi <- ifelse(pstar > (Fhat[sel] + eps), ceiling(Hhat), floor(Hhat))
+	tmp <- Fhat[sel]
+}
+
+names(csi) <- probs
+attr(csi, "Fhat") <- tmp
+class(csi) <- "midq2q"
+
+return(csi)
+
+}
+
+midq2q.midrq <- function(object, observed = FALSE, ..., newdata = NULL, offset = NULL, na.action = na.pass){
+
+eps <- .Machine$double.eps^0.5
+
+if (!missing(newdata)) {
+	mt <- terms(object)
+	Terms <- delete.response(mt)
+	m <- model.frame(Terms, newdata, na.action = na.action, 
+		xlev = object$levels)
+	if (!is.null(cl <- attr(Terms, "dataClasses"))) 
+		.checkMFClasses(cl, m)
+	object$x <- model.matrix(Terms, m, contrasts.arg = object$contrasts)
+	if (missing(offset)) 
+		object$offset <- rep(0, nrow(object$x))
+	object$data <- newdata
+}
 tau <- object$tau
 nt <- length(tau)
-ecdf_fit <- object$midFit$ecdf_fit
-yo <- object$midFit$yo
-x <- model.matrix(object$formula[-2], newdata)
+x <- object$x
 n <- nrow(x)
 p <- ncol(x)
-xnpc <- if(object$intercept) x[, 2:p, drop = FALSE] else x
+
+if (p == 1 & object$intercept) {
+	return(midq2q.midquantile(object$midFit))
+}
+
+if (p > 1 & object$intercept) {
+	xnpc <- x[, 2:p, drop = FALSE]
+}
+
+if (!object$intercept) {
+	xnpc <- x
+}
+
+ecdf_fit <- object$midFit$ecdf_fit
+yo <- object$midFit$yo
 if(object$midFit$ecdf_est == "npc"){
 	Fhat <- mapply(function(obj, x, y, n) npcdist(bws = obj, exdat = x, eydat = ordered(rep(y, n)))$condist, yo, MoreArgs = list(obj = ecdf_fit, x = xnpc, n = n))
 } else {
@@ -631,7 +698,7 @@ for(j in 1:n){
 		gamma <- pmin(gamma, 1)
 		pstar <- as.numeric((1-gamma)*Ghat[j,sel] + gamma*Ghat[j,sel + 1])
 		sel <- findInterval(pstar, Ghat[j,])
-		csi[j,] <- ifelse(pstar > Fhat[j,sel], ceiling(Hhat[j,]), floor(Hhat[j,]))
+		csi[j,] <- ifelse(pstar > (Fhat[j,sel] + eps), ceiling(Hhat[j,]), floor(Hhat[j,]))
 		tmp[j,] <- Fhat[j,sel]
 	}
 }
@@ -693,18 +760,30 @@ fastDoCall <- function(what, args, quote = FALSE, envir = parent.frame()) {
 
 plot.midq2q <- function(x, ..., xlab = "p", ylab = "Quantile", main = "Ordinary Quantile Function", sub = TRUE, verticals = TRUE, col.steps = "gray70", cex.points = 1, jumps = FALSE){
 
-n <- nrow(x)
-k <- ncol(x)
-Fhat <- attr(x, "Fhat")
+if(is.matrix(x)){
+	n <- nrow(x)
+	k <- ncol(x)
+	Fhat <- attr(x, "Fhat")
 
-if(n > 1) par(mfrow = c(ceiling(n/3), min(c(2,n))))
+	if(n > 1) {
+		nrows <- floor(sqrt(n))
+		ncols <- ceiling(n/nrows)
+		par(mfrow = c(nrows, ncols))
+	}
 
-for(j in 1:n){
-	sf <- stepfun(Fhat[j,], c(x[j,], x[j,k]))
-	subtext <- paste("id = ", j)
+	for(j in 1:n){
+		sf <- stepfun(Fhat[j,], c(x[j,], x[j,k]))
+		subtext <- paste("id = ", j)
+		plot.stepfun(sf, xlab = xlab, ylab = ylab, main = main, verticals = verticals, col = col.steps, cex.points = cex.points, col.points = col.steps, do.points = jumps, xlim = c(0,1), ...)
+		if(sub) mtext(text = subtext, side = 3, line = 0.5, cex = 0.8)
+	}
+} else {
+	Fhat <- attr(x, "Fhat")
+	k <- length(x)
+	sf <- stepfun(Fhat, c(x, x[k]))
 	plot.stepfun(sf, xlab = xlab, ylab = ylab, main = main, verticals = verticals, col = col.steps, cex.points = cex.points, col.points = col.steps, do.points = jumps, xlim = c(0,1), ...)
-	if(sub) mtext(text = subtext, side = 3, line = 0.5, cex = 0.8)
 }
+
 
 }
 
