@@ -1,2 +1,2 @@
-# Qtools
-Utilities for Quantiles
+## Qtools
+Functions for unconditional and conditional quantiles. These include methods for transformation-based quantile regression, quantile-based measures of location, scale and shape, methods for quantiles of discrete variables, quantile-based multiple imputation, restricted quantile regression, directional quantile classification, and quantile ratio regression.	A vignette is given in Geraci (2016, The R Journal) <doi:10.32614/RJ-2016-037> and included in the package.
